@@ -24,8 +24,8 @@ class InputDialog extends StatefulWidget {
 
 class _InputDialogState extends State<InputDialog> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  Map<String, TextEditingController> _controllers = {};
-  Map<String, dynamic> _formData = {};
+  final Map<String, TextEditingController> _controllers = {};
+  final Map<String, dynamic> _formData = {};
   bool _isLoading = false;
   dynamic _part;
   String? _imageUrl; // Define a variable to hold the imageUrl
@@ -96,7 +96,7 @@ class _InputDialogState extends State<InputDialog> {
           ),
         ),
         PopupMenuButton<String>(
-          icon: Icon(Icons.arrow_drop_down),
+          icon: const Icon(Icons.arrow_drop_down),
           onSelected: (String value) {
             setState(() {
               controller.text = value;
@@ -178,7 +178,7 @@ class _InputDialogState extends State<InputDialog> {
           if (_imageUrl != null) // Check if imageUrl is available
             Image.network(_imageUrl!), // Use the imageUrl here'
 
-          Text('Enter Required Data'),
+          const Text('Enter Required Data'),
         ],
       ),
       content: Form(
@@ -194,7 +194,7 @@ class _InputDialogState extends State<InputDialog> {
         ),
       ),
       actions: <Widget>[
-        if (_isLoading) CircularProgressIndicator(),
+        if (_isLoading) const CircularProgressIndicator(),
         TextButton(
           child: const Text('Cancel'),
           onPressed: () => Navigator.of(context).pop(null),

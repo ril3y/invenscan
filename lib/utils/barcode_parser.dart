@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'user_input_requirement.dart';
-import 'package:http/http.dart' as http;
 
 
 abstract class BarcodeParser  {

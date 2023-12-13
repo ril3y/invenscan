@@ -36,6 +36,7 @@ dependencies:
   uuid: ^4.2.1
   http: ^1.1.2  # Add the latest version of the http package
   html: ^0.15.4
+  shared_preferences: ^2.0.15
 
 dev_dependencies:
   flutter_test:
