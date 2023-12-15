@@ -61,8 +61,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _initializeConnectionStatus();
     _loadSavedServers();
     _loadSettings();
-    widget.webSocketManager.onError = _onWebSocketError;
-    widget.webSocketManager.onConnectionChanged = _onConnectionChanged;
+    widget.webSocketManager.addOnError(_onWebSocketError);
+    widget.webSocketManager.addOnConnectionChangedHandler(_onConnectionChanged);
   }
 // ================================================ initState() =========================================================
 

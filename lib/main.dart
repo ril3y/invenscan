@@ -6,6 +6,9 @@ import 'package:uuid/uuid.dart';
 import 'ui/settings.dart';
 import 'dart:math';
 import '../utils/websocket.dart';
+import 'ui/heartbeat.dart';
+import 'ui/status_bar.dart';
+import 'dart:convert';
 
 void main() {
   runApp(const IvenScanner());
@@ -53,14 +56,47 @@ class _MyInvenScan extends State<MyInvenScan> {
   late WebSocketManager webSocketManager;
   List<PartData> parts = [];
 
+  late bool isConnected = false; // To track WebSocket connection status
+  late bool isHeartbeatReceived = false; // To track heartbeat reception
+
   @override
   void initState() {
     super.initState();
-    webSocketManager = WebSocketManager(onReceive, onDisconnect);
+    webSocketManager = WebSocketManager();
+// Set the callback functions
+    webSocketManager.addOnError(handleOnError);
+    webSocketManager.addOnConnectionChangedHandler(handleOnConnectionChanged);
+    webSocketManager.addOnReceiveHandler(handleOnReceive);
+    webSocketManager.addOnDisconnectHandler(handleOnDisconnect);
+    webSocketManager.startConnection();
   }
 
-  void onReceive(data) {
-    print("Data from main!" + data);
+  void handleOnError(String error) {
+    print("Error occurred: $error");
+    // Additional error handling logic here
+  }
+
+  void handleOnConnectionChanged(bool isConnected) {
+    print(
+        "Connection status changed: ${isConnected ? 'Connected' : 'Disconnected'}");
+    // Additional connection status handling logic here
+  }
+
+  void handleOnReceive(dynamic data) {
+    print("Data received: $data");
+    // Additional data handling logic here
+  }
+
+  void handleOnDisconnect() {
+    print("Disconnected from WebSocket");
+    // Additional disconnect handling logic here
+  }
+
+
+  void updateConnectionStatus(bool status) {
+    setState(() {
+      isConnected = status;
+    });
   }
 
   void onDisconnect() {
@@ -68,19 +104,36 @@ class _MyInvenScan extends State<MyInvenScan> {
     print("Disconnected");
   }
 
-  void _initiateScan() async {
-    try {
-      _scanResult = "";
-      List<int> barcodeData = await _scannerService.scan();
-      setState(() {});
-    } catch (e) {
-      setState(() {
-        _scanResult = 'Error: ${e.toString()}';
-      });
-    }
+ void _initiateScan() async {
+  try {
+    _scanResult = "";
+    List<int> barcodeData = await _scannerService.scan();
+
+    // Base64 encode the QR code data
+    String base64EncodedData = base64.encode(barcodeData);
+
+    // Create the JSON object
+    Map<String, dynamic> dataToSend = {
+      'clientId': randomUuid,
+      'qrData': base64EncodedData,
+    };
+
+    // Convert the JSON object to a string
+    String jsonData = json.encode(dataToSend);
+
+    // Send the JSON string to the WebSocket
+    webSocketManager.send(jsonData);
+
+    setState(() {});
+  } catch (e) {
+    setState(() {
+      _scanResult = 'Error: ${e.toString()}';
+    });
   }
+}
 
   void _clear_parts() {
+    webSocketManager.loadSettingsAndConnect();
     setState(() {
       parts.clear();
     });
@@ -134,6 +187,7 @@ class _MyInvenScan extends State<MyInvenScan> {
               ));
             },
           ),
+            HeartbeatIcon(webSocketManager: webSocketManager),
         ],
       ),
       body: SingleChildScrollView(
@@ -192,6 +246,7 @@ class _MyInvenScan extends State<MyInvenScan> {
           ],
         ),
       ),
+      bottomNavigationBar: StatusBar(webSocketManager: webSocketManager),
     );
   }
 }
