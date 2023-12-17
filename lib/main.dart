@@ -1,5 +1,12 @@
+// ignore_for_file: use_build_context_synchronously
+
+import 'dart:typed_data';
+
 import 'package:basic_websocket/ui/styles.dart';
+import 'package:basic_websocket/utils/nfc_manager.dart';
 import 'package:flutter/material.dart';
+import 'package:nfc_manager/nfc_manager.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'scanner_service.dart';
 import 'part_data.dart';
 import 'package:uuid/uuid.dart';
@@ -9,6 +16,9 @@ import '../utils/websocket.dart';
 import 'ui/heartbeat.dart';
 import 'ui/status_bar.dart';
 import 'dart:convert';
+import 'input_dialog.dart';
+import 'dart:developer' as dev;
+import 'ui/question_dialog.dart';
 
 void main() {
   runApp(const IvenScanner());
@@ -68,6 +78,8 @@ class _MyInvenScan extends State<MyInvenScan> {
     webSocketManager.addOnConnectionChangedHandler(handleOnConnectionChanged);
     webSocketManager.addOnReceiveHandler(handleOnReceive);
     webSocketManager.addOnDisconnectHandler(handleOnDisconnect);
+    webSocketManager.addOnUserInputRequired(handleOnRequiredInput);
+
     webSocketManager.startConnection();
   }
 
@@ -82,16 +94,61 @@ class _MyInvenScan extends State<MyInvenScan> {
     // Additional connection status handling logic here
   }
 
+  void handleServerQuestions(String data) async {
+    bool? userResponse = await showQuestionDialog(data);
+    // Create a JSON string based on the user response
+    String responseJson =
+        jsonEncode({"answer": userResponse == true ? "yes" : "no"});
+
+    if (userResponse == true) {
+      webSocketManager.send(responseJson);
+    }
+  }
+
+  void handleOnRequiredInput(dynamic data) async {
+    try {
+      var decodedData = jsonDecode(data);
+      if (decodedData.containsKey('event')) {
+        if (decodedData['event'] == 'question') {
+          handleServerQuestions(data);
+        }
+      } else if (decodedData.containsKey('part_number') &&
+          decodedData.containsKey('required_inputs') &&
+          decodedData.containsKey('client_id')) {
+        // Create a new JSON structure that includes both required_inputs and part_number
+        Map<String, dynamic> dialogData = {
+          'required_inputs': decodedData['required_inputs'],
+          'part_number': decodedData['part_number']
+        };
+        String dialogJsonData = jsonEncode(dialogData);
+
+        // Show the InputDialog with the new JSON data
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return InputDialog(
+              jsonData: dialogJsonData,
+              webSocketManager: webSocketManager,
+            );
+          },
+        );
+      }
+    } catch (e) {
+      print('Error parsing data: $e');
+    }
+  }
+
   void handleOnReceive(dynamic data) {
-    print("Data received: $data");
-    // Additional data handling logic here
+
+    try {} catch (e) {
+      print('Error  in handleOnRecieve data main.dart: $e');
+    }
   }
 
   void handleOnDisconnect() {
     print("Disconnected from WebSocket");
     // Additional disconnect handling logic here
   }
-
 
   void updateConnectionStatus(bool status) {
     setState(() {
@@ -104,33 +161,72 @@ class _MyInvenScan extends State<MyInvenScan> {
     print("Disconnected");
   }
 
- void _initiateScan() async {
-  try {
-    _scanResult = "";
-    List<int> barcodeData = await _scannerService.scan();
-
-    // Base64 encode the QR code data
-    String base64EncodedData = base64.encode(barcodeData);
-
-    // Create the JSON object
-    Map<String, dynamic> dataToSend = {
-      'clientId': randomUuid,
-      'qrData': base64EncodedData,
-    };
-
-    // Convert the JSON object to a string
-    String jsonData = json.encode(dataToSend);
-
-    // Send the JSON string to the WebSocket
-    webSocketManager.send(jsonData);
-
-    setState(() {});
-  } catch (e) {
-    setState(() {
-      _scanResult = 'Error: ${e.toString()}';
-    });
+  Future<bool?> showQuestionDialog(String json_string) async {
+    String jsonData = json_string;
+    bool? response = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return QuestionsDialog(jsonData: jsonData);
+      },
+    );
+    return response; // Return the response
   }
-}
+
+  void _initiateScan() async {
+    try {
+      _scanResult = "";
+      List<int> barcodeData = await _scannerService.scan();
+
+      // Base64 encode the QR code data
+      String base64EncodedData = base64.encode(barcodeData);
+
+      // Create the JSON object
+      Map<String, dynamic> dataToSend = {
+        'clientId': randomUuid,
+        'qrData': base64EncodedData,
+      };
+
+      // Fetch promptNFCValue from shared preferences
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      bool promptNFCValue = prefs.getBool('prompt_nfc') ?? false;
+
+      // Check if we need to show NFC question and await NFC scan
+      if (promptNFCValue) {
+        String nfcQuestionJson =
+            '{"event": "question", "data": {"questionType": "regular", "questionText": "Do you want to write the part number to an NFC tag?", "positiveResponseText": "Yes", "negativeResponseText": "No"}}';
+
+        bool? userResponse = await showQuestionDialog(nfcQuestionJson);
+
+        // If user responded 'Yes', trigger and await NFC scan
+        if (userResponse == true) {
+          try {
+            // Uint8List? nfcData = await NFCManager.readFromNFC();
+            await NFCManager.writeToNFC("A......................");
+
+            // Process NFC data here, if needed
+            // You can include NFC data in 'dataToSend' if required
+            //print(nfcData);
+          } catch (e) {
+            // Handle NFC read errors
+            print("NFC Read Error: ${e.toString()}");
+            return; // Exit the method if NFC read fails
+          }
+        }
+      }
+
+      // Convert the JSON object to a string
+      String jsonData = json.encode(dataToSend);
+
+      // Send the JSON string to the WebSocket
+      webSocketManager.send(jsonData);
+
+      setState(() {});
+    } catch (e) {
+      setState(() {
+        _scanResult = 'Error: ${e.toString()}';
+      });
+    }
+  }
 
   void _clear_parts() {
     webSocketManager.loadSettingsAndConnect();
@@ -139,38 +235,7 @@ class _MyInvenScan extends State<MyInvenScan> {
     });
   }
 
-  List<DataColumn> _createColumns() {
-    var columns = <DataColumn>[
-      const DataColumn(label: Text('Supplier')),
-      const DataColumn(label: Text('Part Number')),
-    ];
-
-    // Add additional columns based on dynamic data (if any)
-    if (parts.isNotEmpty) {
-      for (var key in parts[0].additionalData.keys) {
-        columns.add(DataColumn(label: Text(key)));
-      }
-    }
-
-    return columns;
-  }
-
-  List<DataRow> _createRows(List<PartData> parts) {
-    return parts.map<DataRow>((PartData part) {
-      var cells = <DataCell>[
-        DataCell(Text(part.supplierPn)),
-        DataCell(Text(part.manufacturerPn)),
-      ];
-
-      // Add cells for additional data
-      part.additionalData.forEach((key, value) {
-        cells.add(DataCell(Text(value.toString())));
-      });
-
-      return DataRow(cells: cells);
-    }).toList();
-  }
-
+ 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -187,7 +252,7 @@ class _MyInvenScan extends State<MyInvenScan> {
               ));
             },
           ),
-            HeartbeatIcon(webSocketManager: webSocketManager),
+          HeartbeatIcon(webSocketManager: webSocketManager),
         ],
       ),
       body: SingleChildScrollView(
@@ -208,8 +273,8 @@ class _MyInvenScan extends State<MyInvenScan> {
                 // Add this for horizontal scrolling of DataTable
                 scrollDirection: Axis.horizontal,
                 child: DataTable(
-                  columns: _createColumns(),
-                  rows: _createRows(parts),
+                  columns: PartData.createColumns(parts),
+                  rows: PartData.createRows(parts),
                 ),
               ),
             ],
@@ -238,7 +303,8 @@ class _MyInvenScan extends State<MyInvenScan> {
             FloatingActionButton(
               heroTag: 'addPartButton', // Unique tag
               onPressed: () {
-                // Add your logic to handle the "Add Part" button here
+                print(showQuestionDialog(
+                    '{"event": "question", "data": {"questionType": "regular", "questionText": "Do you want to write the part number to an NFC tag?", "positiveResponseText": "Yes", "negativeResponseText": "No"}}'));
               },
               tooltip: 'Add Part',
               child: const Icon(Icons.add),
