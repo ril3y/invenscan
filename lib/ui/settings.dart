@@ -53,6 +53,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   List<ServerInfo> servers = [];
   bool _autoConnect = false;
   bool _autoReconnect = false;
+  bool _promptNFC = false;
 
 // ================================================ initState() =========================================================
   @override
@@ -92,6 +93,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _addServer() async {
+    print("Name: ${_nameController.text}");
+    print("Address: ${_addressController.text}");
+    print("Port: ${_portController.text}");
+
     if (_nameController.text.isEmpty ||
         _addressController.text.isEmpty ||
         _portController.text.isEmpty) {
@@ -154,18 +159,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     await prefs.setString('selected_server_port', server.port);
   }
 
-// Future<void> _loadSettingsAndConnect() async {
-//   SharedPreferences prefs = await SharedPreferences.getInstance();
-//   String? serverAddress = prefs.getString('selected_server_address');
-//   String? serverPort = prefs.getString('selected_server_port');
-//   bool autoConnect = prefs.getBool('auto_connect') ?? false;
-
-//   if (serverAddress != null && serverPort != null && autoConnect) {
-//     String uriString = 'ws://$serverAddress:$serverPort/ws';
-//     connect();
-//   }
-// }
-
   void _loadSavedServers() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     List<String> storedServers = prefs.getStringList('servers') ?? [];
@@ -225,10 +218,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     bool autoConnectValue = prefs.getBool('auto_connect') ?? false;
     bool autoReconnectValue = prefs.getBool('auto_reconnect') ?? false;
+    bool promptNFCValue = prefs.getBool('prompt_nfc') ?? false;
 
     setState(() {
       _autoConnect = autoConnectValue;
       _autoReconnect = autoReconnectValue;
+      _promptNFC = promptNFCValue;
+    });
+  }
+
+  void _togglePromptNFC(bool value) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('prompt_nfc', value);
+
+    setState(() {
+      _promptNFC = value;
     });
   }
 
@@ -268,47 +272,41 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildServerList() {
-    return Scrollbar(
-      thumbVisibility:
-          true, // Set this to true to always show the scrollbar thumb
-      child: ListView.builder(
-        itemCount: servers.length,
-        itemBuilder: (context, index) {
-          final server = servers[index];
-          return Container(
-            color: index % 2 == 0 ? Colors.grey[200] : Colors.white,
-            child: ListTile(
-              title: Row(
-                children: <Widget>[
-                  Expanded(
-                      flex: 3,
-                      child:
-                          Text(server.address, style: AppStyles.tableRowText)),
-                  Expanded(
-                      flex: 2,
-                      child: Text(server.port, style: AppStyles.tableRowText)),
-                  Expanded(
+    return Column(
+      children: servers.map((server) {
+        int index = servers.indexOf(server);
+        return Container(
+          color: index % 2 == 0 ? Colors.grey[200] : Colors.white,
+          child: ListTile(
+            title: Row(
+              children: <Widget>[
+                Expanded(
+                    flex: 3,
+                    child: Text(server.address, style: AppStyles.tableRowText)),
+                Expanded(
                     flex: 2,
-                    child: IconButton(
-                      icon: Icon(Icons.delete, color: Colors.red),
-                      onPressed: () => _removeServer(index),
-                    ),
+                    child: Text(server.port, style: AppStyles.tableRowText)),
+                Expanded(
+                  flex: 2,
+                  child: IconButton(
+                    icon: Icon(Icons.delete, color: Colors.red),
+                    onPressed: () => _removeServer(index),
                   ),
-                  Expanded(
-                    flex: 2,
-                    child: Checkbox(
-                      value: server.isSelected,
-                      onChanged: (bool? value) {
-                        _selectServer(index);
-                      },
-                    ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Checkbox(
+                    value: server.isSelected,
+                    onChanged: (bool? value) {
+                      _selectServer(index);
+                    },
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          );
-        },
-      ),
+          ),
+        );
+      }).toList(),
     );
   }
 
@@ -318,9 +316,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       appBar: AppBar(
         title: Text('Settings'),
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
             TextField(
               controller: _nameController,
@@ -335,65 +334,90 @@ class _SettingsScreenState extends State<SettingsScreen> {
               decoration: InputDecoration(labelText: 'Port'),
               keyboardType: TextInputType.number,
             ),
+            SizedBox(height: 20),
             CheckboxListTile(
               title: Text("Auto Connect"),
               value: _autoConnect,
               onChanged: servers.any((server) => server.isSelected)
-                  ? (bool? value) async {
-                      if (value != null) {
-                        SharedPreferences prefs =
-                            await SharedPreferences.getInstance();
-                        await prefs.setBool('auto_connect', value);
-
-                        setState(() {
-                          _autoConnect = value;
-                        });
-
-                        // Update WebSocketManager setting
-                        widget.webSocketManager.setAutoReconnect(value);
-                      }
-                    }
+                  ? _autoConnectChanged
                   : null, // Disable if no server is selected
+              contentPadding: EdgeInsets.zero,
             ),
             CheckboxListTile(
               title: Text("Reconnect if Disconnected"),
               value: _autoReconnect,
-              onChanged: (bool? value) {
-                setState(() {
-                  _autoReconnect = value ?? false;
-                });
-              },
+              onChanged: _autoReconnectChanged,
+              contentPadding: EdgeInsets.zero,
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16.0),
-              child: Wrap(
-                spacing: 20, // horizontal space between buttons
-                runSpacing: 20, // vertical space between lines
-                alignment: WrapAlignment.center,
-                children: <Widget>[
-                  ElevatedButton(
-                    onPressed: _toggleWebSocketConnection,
-                    child: Text(_buttonText),
-                  ),
-                  ElevatedButton(
-                    onPressed: _addServer,
-                    child: Text('Add Server'),
-                  ),
-                  ElevatedButton(
-                    onPressed: _clearSharedPreferences,
-                    child: Text('Clear All Settings'),
-                  ),
-                ],
-              ),
+            CheckboxListTile(
+              title: Text("Prompt NFC"),
+              value: _promptNFC,
+              onChanged: _promptNFCChanged,
+              contentPadding: EdgeInsets.zero,
             ),
-            SizedBox(height: 10),
-            Text(_validationMessage),
+            SizedBox(height: 20),
+            _buildButtonSection(),
+            SizedBox(height: 20),
+            Text(_validationMessage, textAlign: TextAlign.center),
             SizedBox(height: 20),
             _buildTableHeaders(),
-            Expanded(child: _buildServerList()),
+            _buildServerList(), // Removed Expanded wrapper
           ],
         ),
       ),
+    );
+  }
+
+  // Add the onChanged methods for checkboxes
+  void _autoConnectChanged(bool? value) async {
+    if (value != null) {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('auto_connect', value);
+      setState(() {
+        _autoConnect = value;
+      });
+    }
+  }
+
+ void _autoReconnectChanged(bool? value) async {
+  if (value != null) {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('auto_reconnect', value);
+    setState(() {
+      _autoReconnect = value;
+    });
+  }
+}
+
+void _promptNFCChanged(bool? value) async {
+  if (value != null) {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('prompt_nfc', value);
+    setState(() {
+      _promptNFC = value;
+    });
+  }
+}
+
+  Widget _buildButtonSection() {
+    return Wrap(
+      spacing: 20, // horizontal space between buttons
+      runSpacing: 20, // vertical space between lines
+      alignment: WrapAlignment.center,
+      children: <Widget>[
+        ElevatedButton(
+          onPressed: _toggleWebSocketConnection,
+          child: Text(_buttonText),
+        ),
+        ElevatedButton(
+          onPressed: _addServer,
+          child: Text('Add Server'),
+        ),
+        ElevatedButton(
+          onPressed: _clearSharedPreferences,
+          child: Text('Clear All Settings'),
+        ),
+      ],
     );
   }
 }

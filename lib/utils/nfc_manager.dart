@@ -19,10 +19,14 @@ class NFCManager {
             throw NFCWriteException('Tag is not NDEF writable or is null');
           }
           await ndef.write(NdefMessage([NdefRecord.createText(message)]));
+          // Delay added here before completing the operation
+          await Future.delayed(Duration(seconds: 1));
           completer.complete();
         } catch (e) {
           completer.completeError(e);
         } finally {
+          // Adding delay before stopping the session
+          await Future.delayed(Duration(seconds: 1));
           NfcManager.instance.stopSession();
         }
       },
@@ -34,6 +38,9 @@ class NFCManager {
 
     return completer.future;
   }
+
+
+
 
   static Future<Uint8List?> readFromNFC() async {
     bool isAvailable = await NfcManager.instance.isAvailable();
@@ -69,7 +76,8 @@ class NFCManager {
         return Future.value();
       },
     );
-    return null;
+
+    return completer.future;
   }
 }
 

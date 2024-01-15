@@ -1,21 +1,17 @@
+// ignore_for_file: unnecessary_type_check
+
 import 'package:flutter/material.dart';
-import 'utils/user_input_requirement.dart';
-import 'category_type_associations.dart';
-import 'utils/barcode_parser.dart';
 import 'dart:convert';
+import 'utils/websocket.dart';
 
 class InputDialog extends StatefulWidget {
-  final List<UserInputRequirement> userInputRequirements;
-  final String category;
-  final BarcodeParser barcodeParser;
-  final Future<void> Function() onDataFetch; // Callback function
+  final String jsonData; // Pass the JSON string here
+  final WebSocketManager webSocketManager;
 
   const InputDialog({
     Key? key,
-    required this.userInputRequirements,
-    this.category = '',
-    required this.barcodeParser,
-    required this.onDataFetch, // Pass the parser instance
+    required this.jsonData,
+    required this.webSocketManager,
   }) : super(key: key);
 
   @override
@@ -23,196 +19,136 @@ class InputDialog extends StatefulWidget {
 }
 
 class _InputDialogState extends State<InputDialog> {
+  late List<dynamic> requiredInputs;
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final Map<String, TextEditingController> _controllers = {};
   final Map<String, dynamic> _formData = {};
-  bool _isLoading = false;
-  dynamic _part;
-  String? _imageUrl; // Define a variable to hold the imageUrl
-  String? _description; // Define a variable to hold the imageUrl
+
+  late String partNumber; // Variable to store part number
 
   @override
   void initState() {
     super.initState();
-    for (var requirement in widget.userInputRequirements) {
-      _controllers[requirement.name] = TextEditingController();
+    _parseJsonData();
+  }
+
+  void _handleSubmit() {
+    if (_formKey.currentState!.validate()) {
+      _formKey.currentState!.save();
+
+      // Gather data from the controllers
+      Map<String, dynamic> userInputData = {};
+      _controllers.forEach((fieldName, controller) {
+        userInputData[fieldName] = controller.text;
+      });
+
+      // Decode the JSON data which is expected to be a Map
+      Map<String, dynamic> originalJson = jsonDecode(widget.jsonData);
+      List<dynamic> originalJsonList = originalJson['required_inputs'] ?? [];
+
+      // Iterate through the list and update the 'value' of each field
+      for (var field in originalJsonList) {
+        if (field is Map<String, dynamic> && field.containsKey('field_name')) {
+          String fieldName = field['field_name'];
+          if (userInputData.containsKey(fieldName)) {
+            field['value'] = userInputData[fieldName]; // Update the 'value'
+          }
+        }
+      }
+
+      // Update the list in the original map
+      originalJson['required_inputs'] = originalJsonList;
+
+      // Convert the updated map to a JSON string
+      String updatedJsonString = jsonEncode(originalJson);
+
+      // Send the updated JSON string back to the server
+      widget.webSocketManager.send(updatedJsonString);
+
+      // Close the dialog or navigate away as needed
+      Navigator.of(context).pop();
     }
-    _fetchPartData();
+  }
+
+  void _parseJsonData() {
+    try {
+      Map<String, dynamic> fullData = jsonDecode(widget.jsonData);
+      if (fullData.containsKey('required_inputs') &&
+          fullData['required_inputs'] is List) {
+        requiredInputs = fullData['required_inputs'];
+      } else {
+        requiredInputs = [];
+        print('Error: required_inputs is not a list.');
+      }
+
+      if (fullData.containsKey('part_number')) {
+        partNumber = fullData['part_number'];
+      } else {
+        print('Error: part_number is missing.');
+      }
+
+      // Initialize controllers for each input requirement
+      for (var input in requiredInputs) {
+        if (input is Map<String, dynamic> && input.containsKey('field_name')) {
+          _controllers[input['field_name']] = TextEditingController();
+        }
+      }
+    } catch (e) {
+      print('Error parsing JSON data: $e');
+      requiredInputs = [];
+      partNumber =
+          ''; // Initialize partNumber to an empty string or a default value
+    }
   }
 
   @override
   void dispose() {
-    _controllers.forEach((key, controller) {
+    for (var controller in _controllers.values) {
       controller.dispose();
-    });
+    }
     super.dispose();
   }
 
-  void _fetchPartData() async {
-    setState(() {
-      _isLoading = true;
-    });
-    try {
-      _part = await widget.barcodeParser.enrich();
-      if (_part != null && _part.partType != null) {
-        setState(() {
-          _controllers['type']?.text = _part.partType;
-
-          // Check if _part.imageURL is not null before assigning it to _imageUrl
-          if (_part.imageURL != null) {
-            _imageUrl = _part.imageURL;
-          }
-
-          if (_part.description != null) {
-            _controllers['description']?.text = _part.description;
-          }
-        });
-      }
-    } catch (e) {
-      // Handle errors
-      print('Error fetching part data: $e');
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
-    }
-  }
-
-  Widget _buildEditableDropdown(UserInputRequirement requirement) {
-    var types = CategoryTypeAssociations.getTypesForCategory(widget.category);
-    var controller = _controllers[requirement.name]!;
-    return Row(
-      children: [
-        Expanded(
-          child: TextFormField(
-            controller: controller,
-            decoration: InputDecoration(labelText: requirement.name),
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please enter or select a ${requirement.name}';
-              }
-              return null;
-            },
-          ),
-        ),
-        PopupMenuButton<String>(
-          icon: const Icon(Icons.arrow_drop_down),
-          onSelected: (String value) {
-            setState(() {
-              controller.text = value;
-              _formData[requirement.name] = value;
-            });
-          },
-          itemBuilder: (BuildContext context) {
-            return types.map<PopupMenuItem<String>>((String value) {
-              return PopupMenuItem<String>(
-                value: value,
-                child: Text(value),
-              );
-            }).toList();
-          },
-        ),
-      ],
+  Widget _buildFormField(Map<String, dynamic> input) {
+    var controller = _controllers[input['field_name']]!;
+    return TextFormField(
+      controller: controller,
+      decoration: InputDecoration(labelText: input['prompt']),
+      keyboardType: input['data_type'] == 'int'
+          ? TextInputType.number
+          : TextInputType.text,
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Please enter ${input['field_name']}';
+        }
+        return null;
+      },
     );
-  }
-
-  Widget _buildFormField(UserInputRequirement requirement) {
-    if (requirement.name == 'type' && widget.category.isNotEmpty) {
-      return _buildEditableDropdown(requirement);
-    } else {
-      var controller = _controllers[requirement.name]!;
-      return TextFormField(
-        controller: controller,
-        decoration: InputDecoration(labelText: requirement.name),
-        keyboardType:
-            requirement.type == int ? TextInputType.number : TextInputType.text,
-        validator: (value) {
-          if (value == null || value.isEmpty) {
-            return 'Please enter ${requirement.name}';
-          }
-          return null;
-        },
-      );
-    }
-  }
-
-  List<Widget> _buildAdditionalProperties() {
-    List<Widget> widgets = [];
-    if (_part != null) {
-      _part.additionalProperties.forEach((key, value) {
-        widgets.add(
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8.0),
-            child: Row(
-              children: [
-                Text(
-                  '$key: ',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16, // Adjust the font size as needed
-                    color: Colors.black, // Text color
-                  ),
-                ),
-                Text(
-                  '$value',
-                  style: const TextStyle(
-                    fontStyle: FontStyle.italic,
-                    fontSize: 16, // Adjust the font size as needed
-                    color: Colors.black, // Text color
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      });
-    }
-    return widgets;
   }
 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Column(
-        children: [
-          if (_imageUrl != null) // Check if imageUrl is available
-            Image.network(_imageUrl!), // Use the imageUrl here'
-
-          const Text('Enter Required Data'),
-        ],
-      ),
+      title: const Text('Enter Required Data'),
       content: Form(
         key: _formKey,
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            children: [
-              ...widget.userInputRequirements.map(_buildFormField).toList(),
-              ..._buildAdditionalProperties(),
-            ],
+            children: requiredInputs
+                .map<Widget>((input) => _buildFormField(input))
+                .toList(),
           ),
         ),
       ),
       actions: <Widget>[
-        if (_isLoading) const CircularProgressIndicator(),
         TextButton(
           child: const Text('Cancel'),
           onPressed: () => Navigator.of(context).pop(null),
         ),
         TextButton(
-          child: const Text('Submit'),
-          onPressed: () {
-            if (_formKey.currentState!.validate()) {
-              _formKey.currentState!.save();
-
-              // Merge _part.toMap() into _formData
-              _formData.addAll(_part.toMap());
-
-              Navigator.of(context).pop({
-                'part_data': jsonEncode(_formData),
-              });
-            }
-          },
+          onPressed: _handleSubmit,
+          child: const Text('Submit'), // Reference to your _handleSubmit function
         ),
       ],
     );

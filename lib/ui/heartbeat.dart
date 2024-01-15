@@ -2,7 +2,6 @@
 
 import '../utils/websocket.dart';
 import 'package:flutter/material.dart';
-import '../ui/balloon.dart';
 
 class HeartbeatIcon extends StatefulWidget {
   final WebSocketManager webSocketManager;
@@ -13,36 +12,35 @@ class HeartbeatIcon extends StatefulWidget {
   _HeartbeatIconState createState() => _HeartbeatIconState();
 }
 
-class _HeartbeatIconState extends State<HeartbeatIcon>
-    with SingleTickerProviderStateMixin {
+class _HeartbeatIconState extends State<HeartbeatIcon> with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
   late Animation<Color?> _colorAnimation;
   bool _isConnected = false;
 
   void _onConnectionChangeHandler(bool isConnected) {
-    setState(() {
-      _isConnected = isConnected;
-    });
+    if (mounted) {
+      setState(() {
+        _isConnected = isConnected;
+      });
+    }
   }
 
-  void _onDataHandler(data){
-      if (data == 'heartbeat' && mounted) {
-        _animationController.forward(from: 0.0);
-      }
+  void _onHeartBeatHandler() {
+    if (mounted) {
+      _animationController.forward(from: 0.0);
     }
+  }
 
   @override
   void initState() {
     super.initState();
 
-    // Set our callbacks to the websocket methods.
     widget.webSocketManager.addOnConnectionChangedHandler(_onConnectionChangeHandler);
-    widget.webSocketManager.addOnReceiveHandler(_onDataHandler);
+    widget.webSocketManager.addOnHeartbeatHandler(_onHeartBeatHandler);
     
     _animationController = AnimationController(
-      duration:
-          const Duration(milliseconds: 600), // Total duration for the pulse
+      duration: const Duration(milliseconds: 600), // Total duration for the pulse
       vsync: this,
     );
 
@@ -57,8 +55,6 @@ class _HeartbeatIconState extends State<HeartbeatIcon>
       begin: Colors.redAccent, // Normal color
       end: Colors.red, // Color when beating
     ).animate(_animationController);
-
-    
   }
 
   @override
@@ -67,36 +63,31 @@ class _HeartbeatIconState extends State<HeartbeatIcon>
     super.dispose();
   }
 
- @override
-Widget build(BuildContext context) {
-  return AnimatedBuilder(
-    animation: _animationController,
-    builder: (context, child) {
-      if (_isConnected) {
-        return Padding(
-          padding: EdgeInsets.only(right: 8.0),  // Adjust the padding value as needed
-          child: Transform.scale(
-            scale: _scaleAnimation.value,
-            alignment: Alignment.center,
-            child: InkWell(
-              onTap: () {
-                // Define your action here
-                print('Heart icon tapped');
-              },
-              child: Icon(
-                Icons.favorite,
-                color: _colorAnimation.value ?? Colors.blue, // Use animated color
-                size: 24, // Update size as needed
-              ),
-            ),
-          ),
-        );
-      } else {
-        // Return an empty container when not connected
-        return Container();
-      }
-    },
-  );
-}
-
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _animationController,
+      builder: (context, child) {
+        return _isConnected
+            ? Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: Transform.scale(
+                  scale: _scaleAnimation.value,
+                  alignment: Alignment.center,
+                  child: InkWell(
+                    onTap: () {
+                      print('Heart icon tapped');
+                    },
+                    child: Icon(
+                      Icons.favorite,
+                      color: _colorAnimation.value ?? Colors.blue,
+                      size: 24,
+                    ),
+                  ),
+                ),
+              )
+            : Container();
+      },
+    );
+  }
 }

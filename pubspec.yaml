@@ -38,7 +38,10 @@ dependencies:
   html: ^0.15.4
   shared_preferences: ^2.0.15
   nfc_manager: ^3.3.0
-
+  logging: ^1.2.0
+  fl_chart: ^0.66.0
+  url_launcher: ^6.0.9
+  provider: ^6.0.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -48,7 +51,7 @@ dev_dependencies:
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
-  flutter_lints: ^2.0.0
+  flutter_lints: ^3.0.1
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
