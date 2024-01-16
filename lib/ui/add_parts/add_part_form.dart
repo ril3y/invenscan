@@ -136,9 +136,34 @@ class _AddPartFormState extends State<AddPartForm> {
 
       var response = await ServerApi.addPart(partData.toJson());
       // Handle the response, e.g., show a success message or update the UI
-    } catch (e) {
-      // Handle any errors during submission
-      print('Error submitting part: $e');
+    } on ServerApiException catch (apiException) {
+      // Handle specific API errors
+      _showErrorDialog('Failed to submit part', apiException.message);
+      print('API error submitting part: ${apiException.message}');
+    } on Exception catch (genericException) {
+      // Handle any other exceptions
+      _showErrorDialog('Error', 'An unexpected error occurred. Please try again later.');
+      print('Unexpected error submitting part: $genericException');
     }
   }
+}
+
+void _showErrorDialog(String title, String message) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: <Widget>[
+          TextButton(
+            child: Text('OK'),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
+        ],
+      );
+    },
+  );
 }
