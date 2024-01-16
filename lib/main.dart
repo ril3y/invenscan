@@ -2,7 +2,7 @@ import 'package:basic_websocket/ui/styles.dart';
 import 'package:flutter/material.dart';
 import 'dart:math';
 import 'utils/websocket.dart'; // Adjust the import path to match your project structure
-import 'ui/add_parts.dart'; // Adjust the import path as needed
+import 'ui/add_parts/add_parts.dart'; // Adjust the import path as needed
 import 'ui/search.dart'; // Adjust the import path as needed
 import 'ui/settings.dart';
 import 'ui/status_bar.dart';

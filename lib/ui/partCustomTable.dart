@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 import '../part_data.dart';
-import 'edit_screen.dart';
+import 'add_parts/edit_screen.dart';
 
 class CustomTableScreen extends StatefulWidget {
   const CustomTableScreen({Key? key}) : super(key: key);

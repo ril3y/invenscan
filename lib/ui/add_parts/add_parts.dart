@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:basic_websocket/ui/edit_screen.dart';
+import 'package:basic_websocket/ui/add_parts/edit_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
@@ -11,6 +11,9 @@ import 'package:basic_websocket/ui/question_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:basic_websocket/utils/nfc_manager.dart';
 import 'package:basic_websocket/ui/status_bar.dart';
+import 'package:basic_websocket/utils/api/server_api.dart';
+import 'package:basic_websocket/ui/add_parts/add_part_form.dart';
+
 
 class AddParts extends StatefulWidget {
   final WebSocketManager webSocketManager;
@@ -27,6 +30,7 @@ class _AddPartsState extends State<AddParts> {
   String _scanResult = '';
   List<PartData> parts = [];
   bool isWritingToNfc = false;
+  late String serverUrl;
 
   void showNfcWaitingDialog() {
     showDialog(
@@ -34,7 +38,7 @@ class _AddPartsState extends State<AddParts> {
       barrierDismissible: false, // User must tap a button to close the dialog
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Waiting for NFC Tag'),
+          title: const Text('Waiting for NFC Tag'),
           content: const Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
@@ -52,7 +56,7 @@ class _AddPartsState extends State<AddParts> {
                 });
                 Navigator.of(context).pop(); // Close the dialog
               },
-              child: Text('Cancel'),
+              child: const Text('Cancel'),
             ),
           ],
         );
@@ -63,14 +67,9 @@ class _AddPartsState extends State<AddParts> {
   @override
   void initState() {
     super.initState();
-
-    if (mounted) {
-      setState(() {
-        widget.webSocketManager.addOnUserInputRequired(handleOnRequiredInput);
-        widget.webSocketManager.addOnPartAddedHandler(handleOnPartAdded);
-        widget.webSocketManager.startConnection();
-      });
-    }
+    widget.webSocketManager.addOnUserInputRequired(handleOnRequiredInput);
+    widget.webSocketManager.addOnPartAddedHandler(handleOnPartAdded);
+    widget.webSocketManager.startConnection();
   }
 
   void handleOnReceive(dynamic data) {
@@ -103,11 +102,11 @@ class _AddPartsState extends State<AddParts> {
         if (nfcWriteSuccess) {
           // NFC write was successful
           ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('NFC Tag Written Successfully!')));
+              const SnackBar(content: Text('NFC Tag Written Successfully!')));
         } else {
           // NFC write failed or was not performed
           ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('NFC Tag Writing Skipped.')));
+              const SnackBar(content: Text('NFC Tag Writing Skipped.')));
         }
       } else {
         // Handle case where partData is null or not as expected
@@ -217,7 +216,6 @@ class _AddPartsState extends State<AddParts> {
       // Handle question event
 
       bool? userResponse = await showQuestionDialog(data);
-
       // Check if the widget is still mounted after awaiting the dialog response
       if (!mounted) return;
 
@@ -277,6 +275,14 @@ class _AddPartsState extends State<AddParts> {
     );
   }
 
+
+  void _navigateToAddPartForm() {
+  Navigator.of(context).push(
+    MaterialPageRoute(builder: (_) => AddPartForm()),
+  );
+}
+
+
   Widget _buildFloatingActionButtons() {
     return Padding(
       padding: const EdgeInsets.all(16.0),
@@ -290,6 +296,12 @@ class _AddPartsState extends State<AddParts> {
             child: const Icon(Icons.qr_code),
           ),
           const SizedBox(width: 20),
+          FloatingActionButton(
+            heroTag: 'addManualPartButton',
+            onPressed: _navigateToAddPartForm,
+            tooltip: 'Add Manual Part',
+            child: const Icon(Icons.add),
+          ),
           FloatingActionButton(
             heroTag: 'clearButton',
             onPressed: _clear_parts,

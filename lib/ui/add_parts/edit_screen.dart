@@ -1,6 +1,6 @@
 
 import 'package:flutter/material.dart';
-import '../part_data.dart';
+import '../../part_data.dart';
 
 class EditPartScreen extends StatefulWidget {
   final PartData part;
