@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:basic_websocket/utils/api/server_api.dart';
 import 'package:basic_websocket/utils/api/location.dart';
+import 'package:basic_websocket/utils/api/server_api_exception.dart';
 import 'package:basic_websocket/utils/camera_capture.dart';
 import 'package:flutter/services.dart';
 import 'package:basic_websocket/utils/api/partmodel.dart';
@@ -136,10 +137,16 @@ class _AddPartFormState extends State<AddPartForm> {
 
       var response = await ServerApi.addPart(partData.toJson());
       // Handle the response, e.g., show a success message or update the UI
-    } on ServerApiException catch (apiException) {
-      // Handle specific API errors
-      _showErrorDialog('Failed to submit part', apiException.message);
-      print('API error submitting part: ${apiException.message}');
+    } catch (e) {
+      if (e is ServerApiException) {
+        // Handle specific API errors
+        _showErrorDialog('Failed to submit part', e.message);
+        print('API error submitting part: ${e.message}');
+      } else {
+        // Handle any other exceptions
+        _showErrorDialog('Error', 'An unexpected error occurred. Please try again later.');
+        print('Unexpected error submitting part: $e');
+      }
     } on Exception catch (genericException) {
       // Handle any other exceptions
       _showErrorDialog('Error', 'An unexpected error occurred. Please try again later.');
