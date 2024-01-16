@@ -35,6 +35,7 @@ class _AddPartFormState extends State<AddPartForm> {
     _partNumberController.dispose();
     _supplierController.dispose();
     _quantityController.dispose();
+    _descriptionController.dispose();
     super.dispose();
   }
 
@@ -43,6 +44,31 @@ class _AddPartFormState extends State<AddPartForm> {
     setState(() {});
   }
 
+  // ... other methods ...
+
+  Future<void> _submitForm() async {
+    // ... existing _submitForm implementation ...
+  }
+
+  void _showErrorDialog(String title, String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(title),
+          content: Text(message),
+          actions: <Widget>[
+            TextButton(
+              child: Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -155,22 +181,3 @@ class _AddPartFormState extends State<AddPartForm> {
   }
 }
 
-void _showErrorDialog(String title, String message) {
-  showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      return AlertDialog(
-        title: Text(title),
-        content: Text(message),
-        actions: <Widget>[
-          TextButton(
-            child: Text('OK'),
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-          ),
-        ],
-      );
-    },
-  );
-}
