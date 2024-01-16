@@ -46,8 +46,43 @@ class _AddPartFormState extends State<AddPartForm> {
 
   // ... other methods ...
 
-  Future<void> _submitForm() async {
-    // ... existing _submitForm implementation ...
+   Future<void> _submitForm() async {
+    try {
+      PartModel partData = PartModel(
+        partNumber: _partNumberController.text.isNotEmpty
+            ? _partNumberController.text
+            : null,
+        partName: _partNameController.text.isNotEmpty
+            ? _partNameController.text
+            : null,
+        quantity: int.tryParse(_quantityController.text),
+        description: _descriptionController.text.isNotEmpty
+            ? _descriptionController.text
+            : null,
+        supplier: _supplierController.text.isNotEmpty
+            ? _supplierController.text
+            : null,
+        location:
+            _selectedLocation, // Assuming _selectedLocation has a toJson method
+      );
+
+      var response = await ServerApi.addPart(partData.toJson());
+      // Handle the response, e.g., show a success message or update the UI
+    } catch (e) {
+      if (e is ServerApiException) {
+        // Handle specific API errors
+        _showErrorDialog('Failed to submit part', e.message);
+        print('API error submitting part: ${e.message}');
+      } else {
+        // Handle any other exceptions
+        _showErrorDialog('Error', 'An unexpected error occurred. Please try again later.');
+        print('Unexpected error submitting part: $e');
+      }
+    } on Exception catch (genericException) {
+      // Handle any other exceptions
+      _showErrorDialog('Error', 'An unexpected error occurred. Please try again later.');
+      print('Unexpected error submitting part: $genericException');
+    }
   }
 
   void _showErrorDialog(String title, String message) {
@@ -144,43 +179,6 @@ class _AddPartFormState extends State<AddPartForm> {
     );
   }
 
-  Future<void> _submitForm() async {
-    try {
-      PartModel partData = PartModel(
-        partNumber: _partNumberController.text.isNotEmpty
-            ? _partNumberController.text
-            : null,
-        partName: _partNameController.text.isNotEmpty
-            ? _partNameController.text
-            : null,
-        quantity: int.tryParse(_quantityController.text),
-        description: _descriptionController.text.isNotEmpty
-            ? _descriptionController.text
-            : null,
-        supplier: _supplierController.text.isNotEmpty
-            ? _supplierController.text
-            : null,
-        location:
-            _selectedLocation, // Assuming _selectedLocation has a toJson method
-      );
-
-      var response = await ServerApi.addPart(partData.toJson());
-      // Handle the response, e.g., show a success message or update the UI
-    } catch (e) {
-      if (e is ServerApiException) {
-        // Handle specific API errors
-        _showErrorDialog('Failed to submit part', e.message);
-        print('API error submitting part: ${e.message}');
-      } else {
-        // Handle any other exceptions
-        _showErrorDialog('Error', 'An unexpected error occurred. Please try again later.');
-        print('Unexpected error submitting part: $e');
-      }
-    } on Exception catch (genericException) {
-      // Handle any other exceptions
-      _showErrorDialog('Error', 'An unexpected error occurred. Please try again later.');
-      print('Unexpected error submitting part: $genericException');
-    }
-  }
+ 
 }
 
