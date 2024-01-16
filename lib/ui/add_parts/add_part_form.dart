@@ -15,7 +15,6 @@ class _AddPartFormState extends State<AddPartForm> {
   // Add TextEditingControllers for form fields
   final TextEditingController _partNameController = TextEditingController();
   final TextEditingController _partNumberController = TextEditingController();
-  final TextEditingController _partNameController = TextEditingController();
   final TextEditingController _supplierController = TextEditingController();
   final TextEditingController _quantityController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
@@ -34,7 +33,6 @@ class _AddPartFormState extends State<AddPartForm> {
     // Dispose controllers when the widget is disposed
     _partNameController.dispose();
     _partNumberController.dispose();
-    _partNameController.dispose();
     _supplierController.dispose();
     _quantityController.dispose();
     _descriptionController.dispose();
