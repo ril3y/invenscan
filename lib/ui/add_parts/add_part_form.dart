@@ -46,6 +46,9 @@ class _AddPartFormState extends State<AddPartForm> {
 
   // ... other methods ...
 
+  Future<void> _submitForm() async {
+    // ... existing _submitForm implementation ...
+  }
 
   void _showErrorDialog(String title, String message) {
     showDialog(
