@@ -1,16 +1,21 @@
 // scanner_service.dart
 
 import 'dart:convert';
-import 'package:barcode_scan2/barcode_scan2.dart'; // or your specific barcode scan package
+import 'package:barcode_scan2/barcode_scan2.dart' as barcode_scan2;
+import 'package:google_ml_kit/google_ml_kit.dart';
+import 'package:camera/camera.dart';
 
 class ScannerService {
-
+CameraController? _camera;
+  final textDetector = GoogleMlKit.vision.textRecognizer();
   ScannerService();
+
+  
   
 Future<List<int>> scan() async {
-  var result = await BarcodeScanner.scan();
+  var result = await barcode_scan2.BarcodeScanner.scan();
   // Check for a valid result
-  if (result.type == ResultType.Barcode) {
+  if (result.type == barcode_scan2.ResultType.Barcode) {
     var bytes = utf8.encode(result.rawContent);
     // Return the byte array directly
     return bytes;
@@ -21,45 +26,9 @@ Future<List<int>> scan() async {
   }
 }
 
-
-  // Future<String> _scan() async {
-  //   var result = await BarcodeScanner.scan();
-  //     var bytes = utf8.encode(result.rawContent);
-  //     var hexString =
-  //         bytes.map((byte) => byte.toRadixString(16).padLeft(2, '0')).join();
-  //     print("Scanned: " + hexString);
-  //     print("ASCII:" + result.rawContent);
-
-  //     List<List<int>> records = [];
-  //     List<int> currentRecord = [];
-  //     List<int> currentField = [];
-
-  //     for (var byte in bytes) {
-  //       if (byte == 29) {
-  //         currentRecord
-  //             .add(30); // Add RS to represent GS when converting to string.
-  //         currentRecord.addAll(currentField);
-  //         currentField = [];
-  //       } else if (byte == 30) {
-  //         records.add(currentRecord);
-  //         currentRecord = [];
-  //       } else {
-  //         currentField.add(byte);
-  //       }
-  //     }
-
-  //     if (currentField.isNotEmpty) {
-  //       currentRecord.addAll(currentField);
-  //     }
-
-  //     if (currentRecord.isNotEmpty) {
-  //       records.add(currentRecord);
-  //     }
-
-  //     for (var record in records) {
-  //       print(String.fromCharCodes(record).replaceAll('\x1e', '|'));
-  //     }
-  
-  //     return result.rawContent.toString();
-  // }
+// void _processImage(CameraImage image) async {
+//   final inputImage = // Convert CameraImage to InputImage
+//   final RecognizedText recognizedText = await textDetector.processImage(inputImage);
+//   // Extract and handle text data
+// }
 }
