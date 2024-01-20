@@ -13,16 +13,6 @@ class _LocationsWidgetState extends State<LocationsWidget> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
 
-  @override
-  void initState() {
-    super.initState();
-    // fetchTopLevelLocations(); // This is no longer needed as the LocationTreeView handles fetching locations
-  }
-
-
-  void _addLocation() async {
-    String? parentId = selectedTopLevelLocation?.id ;
-  }
 
   void _addLocation() async {
     // The parentId should be determined by the selected location in the LocationTreeView
@@ -50,9 +40,8 @@ class _LocationsWidgetState extends State<LocationsWidget> {
       // Clear the text fields after successful submission
       _nameController.clear();
       _descriptionController.clear();
-      // Optionally, refresh the locations list
-      // fetchTopLevelLocations(); // This method is no longer needed
-      fetchTopLevelLocations();
+      // Trigger a refresh in the LocationTreeView if needed
+      // This may require a callback or state management solution
     } catch (e) {
       // Handle errors
       ScaffoldMessenger.of(context).showSnackBar(
