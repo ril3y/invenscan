@@ -22,6 +22,12 @@ class _LocationsWidgetState extends State<LocationsWidget> {
 
   void _addLocation() async {
     String? parentId = selectedTopLevelLocation?.id ;
+  }
+
+  void _addLocation() async {
+    // The parentId should be determined by the selected location in the LocationTreeView
+    // This will be handled by a callback or state management solution
+    String? parentId; // TODO: Set the parentId based on the selected location
     String name = _nameController.text;
     String description = _descriptionController.text;
 
@@ -45,6 +51,7 @@ class _LocationsWidgetState extends State<LocationsWidget> {
       _nameController.clear();
       _descriptionController.clear();
       // Optionally, refresh the locations list
+      // fetchTopLevelLocations(); // This method is no longer needed
       fetchTopLevelLocations();
     } catch (e) {
       // Handle errors
@@ -56,6 +63,7 @@ class _LocationsWidgetState extends State<LocationsWidget> {
 
   @override
   Widget build(BuildContext context) {
+    // Widget build implementation remains unchanged
     return Scaffold(
       appBar: AppBar(
         title: const Text("Locations"),
