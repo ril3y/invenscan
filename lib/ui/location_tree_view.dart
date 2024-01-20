@@ -45,12 +45,31 @@ class _LocationTreeViewState extends State<LocationTreeView> {
   }
 
   Widget _buildLocationNode(Location location) {
-    return ExpansionTile(
-      title: Text(location.name),
-      children: location.children.map<Widget>(_buildLocationNode).toList(),
-      onExpansionChanged: (bool expanded) {
-        if (expanded) {
-          // Optionally, load children locations dynamically
+    return FutureBuilder<List<Location>>(
+      future: ServerApi.getLocationDetails(location.id),
+      builder: (BuildContext context, AsyncSnapshot<List<Location>> snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return ListTile(
+            title: Text(location.name),
+            subtitle: Text('Loading...'),
+          );
+        } else if (snapshot.hasError) {
+          return ListTile(
+            title: Text(location.name),
+            subtitle: Text('Error: ${snapshot.error}'),
+          );
+        } else if (snapshot.hasData) {
+          return ExpansionTile(
+            title: Text(location.name),
+            children: snapshot.data!
+                .map<Widget>((childLocation) => _buildLocationNode(childLocation))
+                .toList(),
+          );
+        } else {
+          return ListTile(
+            title: Text(location.name),
+            subtitle: Text('No children found'),
+          );
         }
       },
     );
@@ -65,6 +84,7 @@ class _LocationTreeViewState extends State<LocationTreeView> {
       ),
       body: topLevelLocations.isEmpty
           ? Center(child: CircularProgressIndicator())
+          : _buildTree(topLevelLocations),
           : _buildTree(topLevelLocations), // Call the new _buildTree method
     );
   }
