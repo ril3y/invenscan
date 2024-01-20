@@ -85,7 +85,6 @@ class _LocationTreeViewState extends State<LocationTreeView> {
       body: topLevelLocations.isEmpty
           ? Center(child: CircularProgressIndicator())
           : _buildTree(topLevelLocations),
-          : _buildTree(topLevelLocations), // Call the new _buildTree method
     );
   }
 }
