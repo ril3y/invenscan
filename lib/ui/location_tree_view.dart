@@ -67,6 +67,26 @@ class _LocationTreeViewState extends State<LocationTreeView> {
       },
     );
   }
+  Widget _buildTree(List<Location> locations) {
+    return ListView.builder(
+      itemCount: locations.length,
+      itemBuilder: (BuildContext context, int index) {
+        Location location = locations[index];
+        return ExpansionTile(
+          key: PageStorageKey<String>(location.id),
+          title: Text(location.name),
+          children: location.children?.map<Widget>((child) {
+            return _buildTree([child]);
+          }).toList() ?? [],
+          onExpansionChanged: (bool expanded) {
+            if (expanded && (location.children == null || location.children!.isEmpty)) {
+              _fetchChildLocations(location);
+            }
+          },
+        );
+      },
+    );
+  }
 
   void _fetchChildLocations(Location parentLocation) async {
     // Existing code remains unchanged
@@ -83,6 +103,11 @@ class _LocationTreeViewState extends State<LocationTreeView> {
 
   @override
   Widget build(BuildContext context) {
-    return _buildTree(topLevelLocations);
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Location Tree'),
+      ),
+      body: _buildTree(topLevelLocations),
+    );
   }
 }
