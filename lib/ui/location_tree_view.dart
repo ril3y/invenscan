@@ -33,40 +33,7 @@ class _LocationTreeViewState extends State<LocationTreeView> {
     }
   }
 
-  Widget _buildTree(List<Location> locations) {
-    return ListView.builder(
-      itemCount: locations.length,
-      itemBuilder: (BuildContext context, int index) {
-        return ExpansionTile(
-          title: Text(locations[index].name),
-          children: locations[index].children.map<Widget>((child) {
-            return _buildTree([child]);
-          }).toList(),
-          onExpansionChanged: (bool expanded) {
-            if (expanded && locations[index].children.isEmpty) {
-              // Fetch child locations if the location is expanded and has no children yet
-              _fetchChildLocations(locations[index]);
-            }
-          },
-        onTap: () {
-            widget.onLocationSelected(locations[index]);
-          },
-        );
-      },
-    );
-  }
 
-  void _fetchChildLocations(Location parentLocation) async {
-    try {
-      var children = await ServerApi.getLocationDetails(parentLocation.id);
-      setState(() {
-        parentLocation.children = children;
-      });
-    } catch (e) {
-      // Handle errors, e.g., by showing a snackbar or logging
-      print('Failed to fetch child locations: $e');
-    }
-  }
 
   Widget _buildTree() {
     // For now, we are just creating a placeholder UI
