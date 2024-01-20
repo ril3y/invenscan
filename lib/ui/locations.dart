@@ -108,10 +108,18 @@ class _LocationsWidgetState extends State<LocationsWidget> {
           TextField(
             controller: _nameController,
             decoration: InputDecoration(labelText: 'Location Name'),
+            decoration: InputDecoration(
+              labelText: 'Location Name',
+              contentPadding: EdgeInsets.symmetric(horizontal: 8.0), // Add horizontal padding
+            ),
           ),
           TextField(
             controller: _descriptionController,
             decoration: InputDecoration(labelText: 'Description'),
+            decoration: InputDecoration(
+              labelText: 'Description',
+              contentPadding: EdgeInsets.symmetric(horizontal: 8.0), // Add horizontal padding
+            ),
           ),
           ElevatedButton(
             onPressed: _addLocation,
