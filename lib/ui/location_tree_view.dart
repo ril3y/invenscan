@@ -35,20 +35,24 @@ class _LocationTreeViewState extends State<LocationTreeView> {
 
 
 
-  Widget _buildTree() {
-    // For now, we are just creating a placeholder UI
-    return ListView(
-      children: [
-        ListTile(
-          title: Text('Location 1'),
-          onTap: () {}, // Placeholder for tap action
-        ),
-        ListTile(
-          title: Text('Location 2'),
-          onTap: () {}, // Placeholder for tap action
-        ),
-        // More list tiles can be added here as needed
-      ],
+  Widget _buildTree(List<Location> locations) {
+    return ListView.builder(
+      itemCount: locations.length,
+      itemBuilder: (BuildContext context, int index) {
+        return _buildLocationNode(locations[index]);
+      },
+    );
+  }
+
+  Widget _buildLocationNode(Location location) {
+    return ExpansionTile(
+      title: Text(location.name),
+      children: location.children.map<Widget>(_buildLocationNode).toList(),
+      onExpansionChanged: (bool expanded) {
+        if (expanded) {
+          // Optionally, load children locations dynamically
+        }
+      },
     );
   }
 
@@ -59,7 +63,9 @@ class _LocationTreeViewState extends State<LocationTreeView> {
       appBar: AppBar(
         title: Text('Location Tree'),
       ),
-      body: _buildTree(), // Call the new _buildTree method
+      body: topLevelLocations.isEmpty
+          ? Center(child: CircularProgressIndicator())
+          : _buildTree(topLevelLocations), // Call the new _buildTree method
     );
   }
 }
