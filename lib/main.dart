@@ -17,6 +17,7 @@ void main() {
     const IvenScanner(),
   );
 }
+import 'package:basic_websocket/ui/locations.dart'; // Adjust the import path as needed
 
 class IvenScanner extends StatelessWidget {
   const IvenScanner({Key? key}) : super(key: key);
