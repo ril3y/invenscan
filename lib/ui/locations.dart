@@ -36,11 +36,11 @@ class _LocationsWidgetState extends State<LocationsWidget> {
     });
   }
 
-  void fetchChildLocations(Location parentLocation) async {
+  void fetchChildLocations(String parentLocationId) async {
     try {
-      var childLocationsList = await ServerApi.fetchChildLocations(parentLocation.id);
+      var locationDetails = await ServerApi.getLocationDetails(parentLocationId);
       setState(() {
-        childLocations = childLocationsList;
+        childLocations = locationDetails;
         // Reset selected child location if the new list does not contain the old value
         if (!childLocations.contains(selectedChildLocation)) {
           selectedChildLocation = null;
@@ -48,7 +48,7 @@ class _LocationsWidgetState extends State<LocationsWidget> {
       });
     } catch (e) {
       // Handle errors, e.g., by showing a snackbar or logging
-      print('Failed to fetch child locations: $e');
+      print('Failed to fetch location details: $e');
     }
   }
 
