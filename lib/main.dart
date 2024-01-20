@@ -1,4 +1,5 @@
 import 'package:basic_websocket/ui/styles.dart';
+import 'package:basic_websocket/utils/api/server_api.dart';
 import 'package:flutter/material.dart';
 import 'dart:math';
 import 'utils/websocket.dart'; // Adjust the import path to match your project structure
@@ -9,10 +10,11 @@ import 'ui/status_bar.dart';
 import 'dart:convert';
 import 'utils/fade_route.dart';
 import 'package:provider/provider.dart';
+import 'package:basic_websocket/ui/InvenBarChart.dart';
 
 void main() {
   runApp(
-       const IvenScanner(),
+    const IvenScanner(),
   );
 }
 
@@ -42,6 +44,7 @@ class IvenScanner extends StatelessWidget {
 
 class MyInvenScan extends StatefulWidget {
   final String title;
+
   const MyInvenScan({Key? key, required this.title}) : super(key: key);
 
   @override
@@ -50,7 +53,9 @@ class MyInvenScan extends StatefulWidget {
 
 class _MyInvenScanState extends State<MyInvenScan> {
   late WebSocketManager webSocketManager;
-  String msg = "Hello";
+  int totalParts = 0;
+  int totalLocations = 0;
+  int totalCategories = 0;
 
   @override
   void initState() {
@@ -59,6 +64,17 @@ class _MyInvenScanState extends State<MyInvenScan> {
     webSocketManager.addOnReceiveHandler(handleOnReceive);
     webSocketManager.addOnConnectionChangedHandler(_onConnectionChanged);
     webSocketManager.startConnection();
+    _fetchStatistics();
+  }
+
+  void _fetchStatistics() async {
+    var counts = await ServerApi.getCounts();
+
+    setState(() {
+      totalParts = counts['parts'];
+      totalLocations = counts['locations'];
+      totalCategories = counts['categories'];
+    });
   }
 
   void handleOnReceive(dynamic data) {
@@ -68,82 +84,100 @@ class _MyInvenScanState extends State<MyInvenScan> {
   }
 
   void _onConnectionChanged(bool isConnected) {
-    setState(() {
-          msg = isConnected ?  'Connect' :'Disconnect';
-
-    });
+    setState(() {});
     if (!isConnected) {
-     if (mounted) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          isConnected
-              ? AppStyles.successSnackBar('Connection successful!')
-              : AppStyles.errorSnackBar('Disconnected!'),
-        );
-      });
-    }
+      if (mounted) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            isConnected
+                ? AppStyles.successSnackBar('Connection successful!')
+                : AppStyles.errorSnackBar('Disconnected!'),
+          );
+        });
+      }
     }
   }
+
+Widget _buildStatCard(String title, int count, IconData icon, Color color) {
+  return Card(
+    elevation: 4,
+    margin: const EdgeInsets.symmetric(vertical: 8.0),
+    child: ListTile(
+      leading: Icon(icon, color: color),
+      title: Text(title, style: TextStyle(fontWeight: FontWeight.bold)),
+      trailing: Text(
+        count.toString(),
+        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color),
+      ),
+    ),
+  );
+}
 
   @override
   Widget build(BuildContext context) {
-
-      return Scaffold(
-        appBar: AppBar(
-          title: Text(widget.title),
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(widget.title),
+      ),
+      drawer: Drawer(
+        child: ListView(
+          children: [
+            const DrawerHeader(
+              decoration: BoxDecoration(
+                color: Colors.blue,
+              ),
+              child: Text('Menu', style: TextStyle(color: Colors.white)),
+            ),
+            ListTile(
+              leading: const Icon(Icons.add_box), // Icon for 'Add Parts'
+              title: const Text('Add Parts'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  FadeRoute(page: AddParts(webSocketManager: webSocketManager)),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.search), // Icon for 'Search'
+              title: const Text('Search'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  FadeRoute(page: const SearchScreen()),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.settings), // Icon for 'Settings'
+              title: const Text('Settings'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  FadeRoute(
+                      page: SettingsScreen(webSocketManager: webSocketManager)),
+                );
+              },
+            ),
+          ],
         ),
-        drawer: Drawer(
-          child: ListView(
-            children: [
-              const DrawerHeader(
-                decoration: BoxDecoration(
-                  color: Colors.blue,
-                ),
-                child: Text('Menu', style: TextStyle(color: Colors.white)),
-              ),
-              ListTile(
-                leading: const Icon(Icons.add_box), // Icon for 'Add Parts'
-                title: const Text('Add Parts'),
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    FadeRoute(
-                        page: AddParts(webSocketManager: webSocketManager)),
-                  );
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.search), // Icon for 'Search'
-                title: const Text('Search'),
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    FadeRoute(page: const SearchScreen()),
-                  );
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.settings), // Icon for 'Settings'
-                title: const Text('Settings'),
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    FadeRoute(
-                        page:
-                            SettingsScreen(webSocketManager: webSocketManager)),
-                  );
-                },
-              ),
-            ],
-          ),
-        ),
-        body: Center(
-          child: Text(msg),
-        ),
-        bottomNavigationBar: StatusBar(webSocketManager: webSocketManager),
-      );
-    }
+      ),
+       body: Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildStatCard("Parts", totalParts, Icons.inventory_2, Colors.blue),
+          _buildStatCard("Locations", totalLocations, Icons.location_on, Colors.green),
+          _buildStatCard("Categories", totalCategories, Icons.category, Colors.orange),
+        ],
+      ),
+    ),
+      bottomNavigationBar: StatusBar(webSocketManager: webSocketManager),
+    );
   }
+}
