@@ -26,6 +26,10 @@ class _LocationsWidgetState extends State<LocationsWidget> {
               var locations = await ServerApi.fetchLocations();
     setState(() {
       topLevelLocations = locations;
+      // Ensure the selected location is still valid, otherwise set it to null
+      if (!topLevelLocations.contains(selectedTopLevelLocation)) {
+        selectedTopLevelLocation = null;
+      }
     });
 
     setState(() {
