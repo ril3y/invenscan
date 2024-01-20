@@ -15,7 +15,6 @@ class _LocationsWidgetState extends State<LocationsWidget> {
   Location? selectedChildLocation;
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
-  final Uuid _uuid = Uuid();
 
   @override
   void initState() {
@@ -24,7 +23,10 @@ class _LocationsWidgetState extends State<LocationsWidget> {
   }
 
   void fetchTopLevelLocations() async {
-    var _locations = ServerApi.fetchLocations();
+              var _locations = ServerApi.fetchLocations();
+
+    setState(() {
+    });
   }
 
   void fetchChildLocations(Location parentLocation) async {
@@ -32,8 +34,7 @@ class _LocationsWidgetState extends State<LocationsWidget> {
   }
 
   void _addLocation() async {
-    String id = _uuid.v4();
-    String? parentId = selectedTopLevelLocation?.id;
+    String? parentId = selectedTopLevelLocation?.id ;
     String name = _nameController.text;
     String description = _descriptionController.text;
 
@@ -46,7 +47,6 @@ class _LocationsWidgetState extends State<LocationsWidget> {
     }
 
     var newLocation = {
-      "id": id,
       "name": name,
       "description": description,
       "parent_id": parentId
