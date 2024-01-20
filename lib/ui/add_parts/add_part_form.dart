@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:basic_websocket/utils/api/server_api.dart';
 import 'package:basic_websocket/utils/api/location.dart';
 import 'package:basic_websocket/utils/camera_capture.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as path;
 import 'package:flutter/services.dart';
 import 'package:basic_websocket/utils/api/partmodel.dart';
 
@@ -23,11 +25,33 @@ class _AddPartFormState extends State<AddPartForm> {
 
   Location? _selectedLocation;
   List<Location> _locations = [];
+  String? _imagePath;
 
   @override
   void initState() {
     super.initState();
     _loadLocations(); // Call _loadLocations to fetch and set the locations
+  }
+
+  Future<void> _takePicture() async {
+    if (!_camera!.value.isInitialized) {
+      print('Error: Camera not initialized');
+      return;
+    }
+    if (_camera!.value.isTakingPicture) {
+      // A capture is already pending, do nothing.
+      return;
+    }
+    try {
+      // Attempt to take a picture and get the file `imagePath` where it was saved.
+      final image = await _camera!.takePicture();
+      setState(() {
+        _imagePath = image.path;
+      });
+    } catch (e) {
+      print(e);
+      return;
+    }
   }
 
   @override
@@ -151,6 +175,12 @@ Widget build(BuildContext context) {
             onPressed: _submitForm,
             child: const Text('Add Part'),
           ),
+          ElevatedButton(
+            onPressed: _takePicture,
+            child: const Text('Take Picture'),
+          ),
+          if (_imagePath != null)
+            Image.file(File(_imagePath!)),
         ],
       ),
     ),
