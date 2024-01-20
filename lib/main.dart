@@ -11,6 +11,7 @@ import 'dart:convert';
 import 'utils/fade_route.dart';
 import 'package:provider/provider.dart';
 import 'package:basic_websocket/ui/InvenBarChart.dart';
+import 'package:basic_websocket/ui/locations.dart'; // Ensure this import is correct
 
 void main() {
   runApp(
@@ -165,6 +166,14 @@ Widget _buildStatCard(String title, int count, IconData icon, Color color) {
             ),
           ],
         ),
+        onTap: () {
+          if (title == "Locations") {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => LocationsScreen()),
+            );
+          }
+        },
       ),
        body: Padding(
       padding: const EdgeInsets.all(16.0),
