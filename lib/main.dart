@@ -111,6 +111,9 @@ Widget _buildStatCard(String title, int count, IconData icon, Color color) {
         count.toString(),
         style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color),
       ),
+      onTap: title == "Locations" ? () {
+        Navigator.of(context).push(MaterialPageRoute(builder: (_) => LocationsScreen()));
+      } : null,
     ),
   );
 }
