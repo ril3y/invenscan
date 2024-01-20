@@ -87,6 +87,19 @@ static Future<Map<String, dynamic>> getCounts() async {
 }
 
 
+  static Future<List<Location>> getLocationDetails(String locationId) async {
+    String baseUrl = await _getServerUrl();
+    var url = Uri.parse('$baseUrl/get_location_details/$locationId');
+    var response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      List<dynamic> data = jsonDecode(response.body);
+      return data.map((locationData) => Location.fromJson(locationData)).toList();
+    } else {
+      throw Exception('Failed to load location details. Status code: ${response.statusCode}');
+    }
+  }
+
   static Future<List<Location>> fetchLocations() async {
     String baseUrl = await _getServerUrl();
     var url = Uri.parse(
