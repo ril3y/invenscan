@@ -21,7 +21,6 @@ class _LocationTreeViewState extends State<LocationTreeView> {
   }
 
   void _fetchTopLevelLocations() async {
-    // Existing code remains unchanged
     try {
       var locations = await ServerApi.fetchLocations();
       setState(() {
@@ -39,11 +38,8 @@ class _LocationTreeViewState extends State<LocationTreeView> {
       itemBuilder: (BuildContext context, int index) {
         return ExpansionTile(
           title: Text(locations[index].name),
-          children: locations[index].children?.map<Widget>((child) {
+          children: locations[index].children.map<Widget>((child) {
             return _buildTree([child]);
-          }).toList() ?? [],
-          onExpansionChanged: (bool expanded) {
-            // Existing code remains unchanged
           }).toList(),
           onExpansionChanged: (bool expanded) {
             if (expanded && locations[index].children.isEmpty) {
@@ -51,37 +47,8 @@ class _LocationTreeViewState extends State<LocationTreeView> {
               _fetchChildLocations(locations[index]);
             }
           },
-          // Replace onTap with the correct ListTile onTap
-        );
-      },
-    );
-  }
-
-  ListTile _buildLocationTile(Location location) {
-    return ListTile(
-      title: Text(location.name),
-      onTap: () {
+        onTap: () {
             widget.onLocationSelected(locations[index]);
-          },
-        );
-      },
-    );
-  }
-  Widget _buildTree(List<Location> locations) {
-    return ListView.builder(
-      itemCount: locations.length,
-      itemBuilder: (BuildContext context, int index) {
-        Location location = locations[index];
-        return ExpansionTile(
-          key: PageStorageKey<String>(location.id),
-          title: Text(location.name),
-          children: location.children?.map<Widget>((child) {
-            return _buildTree([child]);
-          }).toList() ?? [],
-          onExpansionChanged: (bool expanded) {
-            if (expanded && (location.children == null || location.children!.isEmpty)) {
-              _fetchChildLocations(location);
-            }
           },
         );
       },
@@ -89,7 +56,6 @@ class _LocationTreeViewState extends State<LocationTreeView> {
   }
 
   void _fetchChildLocations(Location parentLocation) async {
-    // Existing code remains unchanged
     try {
       var children = await ServerApi.getLocationDetails(parentLocation.id);
       setState(() {
@@ -103,11 +69,6 @@ class _LocationTreeViewState extends State<LocationTreeView> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Location Tree'),
-      ),
-      body: _buildTree(topLevelLocations),
-    );
+    return _buildTree(topLevelLocations);
   }
 }
