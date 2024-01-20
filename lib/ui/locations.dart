@@ -41,7 +41,7 @@ class _LocationsWidgetState extends State<LocationsWidget> {
     if (name.isEmpty || description.isEmpty) {
       // Show error if name or description is empty
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Name and description cannot be empty')),
+        const SnackBar(content: Text('Name and description cannot be empty')),
       );
       return;
     }
@@ -71,7 +71,7 @@ class _LocationsWidgetState extends State<LocationsWidget> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Locations"),
+        title: const Text("Locations"),
       ),
       body: Column(
         children: [
@@ -107,23 +107,21 @@ class _LocationsWidgetState extends State<LocationsWidget> {
             ),
           TextField(
             controller: _nameController,
-            decoration: InputDecoration(labelText: 'Location Name'),
-            decoration: InputDecoration(
+            decoration: const InputDecoration(
               labelText: 'Location Name',
               contentPadding: EdgeInsets.symmetric(horizontal: 8.0), // Add horizontal padding
             ),
           ),
           TextField(
             controller: _descriptionController,
-            decoration: InputDecoration(labelText: 'Description'),
-            decoration: InputDecoration(
+            decoration: const InputDecoration(
               labelText: 'Description',
               contentPadding: EdgeInsets.symmetric(horizontal: 8.0), // Add horizontal padding
             ),
           ),
           ElevatedButton(
             onPressed: _addLocation,
-            child: Text('Add Location'),
+            child: const Text('Add Location'),
           ),
           // Add button for adding a new location
         ],
