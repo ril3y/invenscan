@@ -23,7 +23,10 @@ class _LocationsWidgetState extends State<LocationsWidget> {
   }
 
   void fetchTopLevelLocations() async {
-              var _locations = ServerApi.fetchLocations();
+              var locations = await ServerApi.fetchLocations();
+    setState(() {
+      topLevelLocations = locations;
+    });
 
     setState(() {
     });
