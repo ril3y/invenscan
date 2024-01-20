@@ -37,7 +37,19 @@ class _LocationsWidgetState extends State<LocationsWidget> {
   }
 
   void fetchChildLocations(Location parentLocation) async {
-    // Fetch child locations based on parentLocation
+    try {
+      var childLocationsList = await ServerApi.fetchChildLocations(parentLocation.id);
+      setState(() {
+        childLocations = childLocationsList;
+        // Reset selected child location if the new list does not contain the old value
+        if (!childLocations.contains(selectedChildLocation)) {
+          selectedChildLocation = null;
+        }
+      });
+    } catch (e) {
+      // Handle errors, e.g., by showing a snackbar or logging
+      print('Failed to fetch child locations: $e');
+    }
   }
 
   void _addLocation() async {
