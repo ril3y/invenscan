@@ -17,6 +17,7 @@ class _LocationTreeViewState extends State<LocationTreeView> {
   @override
   void initState() {
     super.initState();
+    // Initialization logic will be added here later
     _fetchTopLevelLocations();
   }
 
@@ -67,8 +68,31 @@ class _LocationTreeViewState extends State<LocationTreeView> {
     }
   }
 
+  Widget _buildTree() {
+    // For now, we are just creating a placeholder UI
+    return ListView(
+      children: [
+        ListTile(
+          title: Text('Location 1'),
+          onTap: () {}, // Placeholder for tap action
+        ),
+        ListTile(
+          title: Text('Location 2'),
+          onTap: () {}, // Placeholder for tap action
+        ),
+        // More list tiles can be added here as needed
+      ],
+    );
+  }
+
+
   @override
   Widget build(BuildContext context) {
-    return _buildTree(topLevelLocations);
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Location Tree'),
+      ),
+      body: _buildTree(), // Call the new _buildTree method
+    );
   }
 }
