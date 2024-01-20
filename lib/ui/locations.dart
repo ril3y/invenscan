@@ -1,6 +1,7 @@
 import 'package:basic_websocket/utils/api/location.dart';
 import 'package:flutter/material.dart';
 import 'package:basic_websocket/utils/api/server_api.dart';
+import 'package:basic_websocket/ui/location_tree_view.dart';
 import 'package:uuid/uuid.dart'; // Import UUID package
 
 class LocationsWidget extends StatefulWidget {
@@ -9,48 +10,15 @@ class LocationsWidget extends StatefulWidget {
 }
 
 class _LocationsWidgetState extends State<LocationsWidget> {
-  List<Location> topLevelLocations = [];
-  List<Location> childLocations = [];
-  Location? selectedTopLevelLocation;
-  Location? selectedChildLocation;
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    fetchTopLevelLocations();
+    // fetchTopLevelLocations(); // This is no longer needed as the LocationTreeView handles fetching locations
   }
 
-  void fetchTopLevelLocations() async {
-              var locations = await ServerApi.fetchLocations();
-    setState(() {
-      topLevelLocations = locations;
-      // Ensure the selected location is still valid, otherwise set it to null
-      if (!topLevelLocations.contains(selectedTopLevelLocation)) {
-        selectedTopLevelLocation = null;
-      }
-    });
-
-    setState(() {
-    });
-  }
-
-  void fetchChildLocations(String parentLocationId) async {
-    try {
-      var locationDetails = await ServerApi.getLocationDetails(parentLocationId);
-      setState(() {
-        childLocations = locationDetails;
-        // Reset selected child location if the new list does not contain the old value
-        if (!childLocations.contains(selectedChildLocation)) {
-          selectedChildLocation = null;
-        }
-      });
-    } catch (e) {
-      // Handle errors, e.g., by showing a snackbar or logging
-      print('Failed to fetch location details: $e');
-    }
-  }
 
   void _addLocation() async {
     String? parentId = selectedTopLevelLocation?.id ;
@@ -94,36 +62,15 @@ class _LocationsWidgetState extends State<LocationsWidget> {
       ),
       body: Column(
         children: [
-          DropdownButton<Location>(
-            value: selectedTopLevelLocation,
-            onChanged: (Location? newValue) {
-              setState(() {
-                selectedTopLevelLocation = newValue;
-                fetchChildLocations(newValue!);
-              });
-            },
-            items: topLevelLocations.map<DropdownMenuItem<Location>>((Location location) {
-              return DropdownMenuItem<Location>(
-                value: location,
-                child: Text(location.name),
-              );
-            }).toList(),
-          ),
-          if (selectedTopLevelLocation != null)
-            DropdownButton<Location>(
-              value: selectedChildLocation,
-              onChanged: (Location? newValue) {
-                setState(() {
-                  selectedChildLocation = newValue;
-                });
+          Expanded(
+            child: LocationTreeView(
+              onLocationSelected: (Location location) {
+                // Handle location selection
+                // You can update the state or perform other actions as needed
+                print('Selected location: ${location.name}');
               },
-              items: childLocations.map<DropdownMenuItem<Location>>((Location location) {
-                return DropdownMenuItem<Location>(
-                  value: location,
-                  child: Text(location.name),
-                );
-              }).toList(),
             ),
+          ),
           TextField(
             controller: _nameController,
             decoration: const InputDecoration(
