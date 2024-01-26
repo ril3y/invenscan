@@ -197,3 +197,10 @@ void handleOnTap(TreeEntry<LocationNode> entry, bool isOpen) {
 }
 
   static final GlobalKey<LocationTreeViewState> key = GlobalKey<LocationTreeViewState>();
+  
+  @override
+  Widget build(BuildContext context) {
+    // TODO: implement build
+    throw UnimplementedError();
+  }
+  }
