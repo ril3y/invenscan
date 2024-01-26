@@ -43,11 +43,9 @@ class _LocationsWidgetState extends State<LocationsWidget> {
   }
 
   void _addLocation() async {
-    String? parentId;
-    if (selectedTopLevelLocation?.id == "root") {
+    String? parentId = selectedChildLocation?.id ?? selectedTopLevelLocation?.id;
+    if (parentId == "root") {
       parentId = null;
-    } else {
-      parentId = selectedTopLevelLocation?.id;
     }
     String name = _nameController.text;
     String description = _descriptionController.text;
