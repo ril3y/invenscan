@@ -57,7 +57,9 @@ class _LocationTreeViewState extends State<LocationTreeView> {
   }
 
   void refreshTree() {
-    treeController = TreeController<LocationNode>(
+    if (treeController != null) {
+      treeController = TreeController<LocationNode>(
+    }
       roots: [root],
       childrenProvider: (LocationNode node) => node.children,
     );
