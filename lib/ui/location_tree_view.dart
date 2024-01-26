@@ -214,12 +214,14 @@ void handleOnTap(TreeEntry<LocationNode> entry, bool isOpen) {
                   padding: const EdgeInsets.fromLTRB(4, 8, 8, 8),
                   child: Row(
                     children: [
-                  FolderButton(
-                    isOpen: entry.hasChildren ? entry.isExpanded : null,
-                    onPressed: entry.hasChildren ? () {
+                  InkWell(
+                    onTap: () {
                       // Call handleOnTap with the current expansion state
                       handleOnTap(entry, !entry.isExpanded);
-                    } : null, // Use an anonymous function here
+                    },
+                    child: FolderButton(
+                      isOpen: entry.hasChildren ? entry.isExpanded : null,
+                    ),
                   ),
                   Flexible(
                     child: Text(entry.node.location.name),
