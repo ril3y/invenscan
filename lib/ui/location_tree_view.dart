@@ -181,20 +181,15 @@ class _LocationTreeViewState extends State<LocationTreeView> {
         location); // Pass the selected location back to the parent widget
   }
 
-void collapseAllExcept(TreeEntry<LocationNode> entry) {
-  for (var node in treeController.allNodes) {
-    if (node != entry.node && node.isExpanded) {
-      treeController.collapse(node);
-    }
-  }
-}
+
 
 void handleOnTap(TreeEntry<LocationNode> entry, bool isOpen) {
-  // Toggle the expansion state based on the isOpen parameter
+  print("handleOnTap called with node: ${entry.node.location.name}");
   if (entry.hasChildren) {
     if (isOpen) {
+      treeController.collapseAll();
+      treeController.expand(root);
       treeController.expand(entry.node);
-      collapseAllExcept(entry);
     } else {
       treeController.collapse(entry.node);
     }
