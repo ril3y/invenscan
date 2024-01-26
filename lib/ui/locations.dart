@@ -18,7 +18,7 @@ class _LocationsWidgetState extends State<LocationsWidget> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _parentIdController = TextEditingController();
-  final GlobalKey<LocationTreeViewState> locationTreeViewKey = GlobalKey();
+  final GlobalKey<_LocationTreeViewState> locationTreeViewKey = GlobalKey();
 
   @override
   void initState() {

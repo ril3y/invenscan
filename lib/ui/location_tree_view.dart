@@ -29,10 +29,10 @@ class LocationTreeView extends StatefulWidget {
       : super(key: key);
 
   @override
-  LocationTreeViewState createState() => LocationTreeViewState();
+  _LocationTreeViewState createState() => _LocationTreeViewState();
 }
 
-class LocationTreeViewState extends State<LocationTreeView> {
+class _LocationTreeViewState extends State<LocationTreeView> {
   late final TreeController<LocationNode> treeController;
   var loc = Location(id: 'root', name: 'Locations', description: 'Locations');
   late final LocationNode root = LocationNode(location: loc);
