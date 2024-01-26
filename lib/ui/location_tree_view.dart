@@ -29,10 +29,10 @@ class LocationTreeView extends StatefulWidget {
       : super(key: key);
 
   @override
-  _LocationTreeViewState createState() => _LocationTreeViewState();
+  LocationTreeViewState createState() => LocationTreeViewState();
 }
 
-class _LocationTreeViewState extends State<LocationTreeView> {
+class LocationTreeViewState extends State<LocationTreeView> {
   late final TreeController<LocationNode> treeController;
   var loc = Location(id: 'root', name: 'Locations', description: 'Locations');
   late final LocationNode root = LocationNode(location: loc);
@@ -182,7 +182,20 @@ class _LocationTreeViewState extends State<LocationTreeView> {
   
   @override
   Widget build(BuildContext context) {
-    // TODO: implement build
-    throw UnimplementedError();
+    return isLoadingTree
+        ? CircularProgressIndicator()
+        : FancyTreeView<LocationNode>(
+            controller: treeController,
+            nodeBuilder: (BuildContext context, TreeEntry<LocationNode> entry) {
+              return ListTile(
+                title: Text(entry.node.location.name),
+                onTap: () => onLocationSelected(entry.node.location),
+                trailing: IconButton(
+                  icon: Icon(Icons.delete),
+                  onPressed: () => confirmDeleteLocation(entry.node.location.id),
+                ),
+              );
+            },
+          );
   }
   }
