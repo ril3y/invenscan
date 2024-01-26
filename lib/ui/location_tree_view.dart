@@ -32,8 +32,7 @@ class LocationTreeView extends StatefulWidget {
   _LocationTreeViewState createState() => _LocationTreeViewState();
 }
 
-class LocationTreeViewState extends State<LocationTreeView> {
-  static final GlobalKey<_LocationTreeViewState> key = GlobalKey<_LocationTreeViewState>();
+class _LocationTreeViewState extends State<LocationTreeView> {
   late final TreeController<LocationNode> treeController;
   var loc = Location(id: 'root', name: 'Locations', description: 'Locations');
   late final LocationNode root = LocationNode(location: loc);
@@ -197,73 +196,4 @@ void handleOnTap(TreeEntry<LocationNode> entry, bool isOpen) {
   });
 }
 
-  @override
-  Widget build(BuildContext context) {
-    return isLoadingTree
-        ? Center(child: CircularProgressIndicator())
-        : TreeView<LocationNode>(
-            treeController: treeController,
-            nodeBuilder: (BuildContext context, TreeEntry<LocationNode> entry) {
-              return TreeIndentation(
-                entry: entry,
-                guide: const IndentGuide.connectingLines(indent: 48),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(4, 8, 8, 8),
-                  child: Row(
-                    children: [
-                  InkWell(
-                    onTap: () {
-                      // Call handleOnTap with the current expansion state
-                      handleOnTap(entry, !entry.isExpanded);
-                    },
-                    child: FolderButton(
-                      isOpen: entry.hasChildren ? entry.isExpanded : null,
-                    ),
-                  ),
-                  Flexible(
-                    child: Text(entry.node.location.name),
-                  ),
-                ],
-                  ),
-                ),
-              );
-            },
-          );
-  }
-}
-
-// class MyTreeTile extends StatelessWidget {
-//   final TreeEntry<LocationNode> entry;
-//   final VoidCallback onTap;
-
-//   const MyTreeTile({
-//     super.key,
-//     required this.entry,
-//     required this.onTap,
-//   });
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return InkWell(
-//       onTap: () {
-//         onTap(); // Call the onTap callback provided
-//       },
-    //   child: TreeIndentation(
-    //     entry: entry,
-    //     guide: const IndentGuide.connectingLines(indent: 48),
-    //     child: Padding(
-    //       padding: const EdgeInsets.fromLTRB(4, 8, 8, 8),
-    //       child: Row(
-    //         children: [
-    //           FolderButton(
-    //             isOpen: entry.hasChildren ? entry.isExpanded : null,
-    //             onPressed: entry.hasChildren ? onTap : null,
-    //           ),
-    //           Text(entry.node.location.name),
-    //         ],
-    //       ),
-    //     ),
-    //   ),
-    // );
-//   }
-// }
+  static final GlobalKey<_LocationTreeViewState> key = GlobalKey<_LocationTreeViewState>();
