@@ -33,7 +33,7 @@ class LocationTreeView extends StatefulWidget {
 }
 
 class _LocationTreeViewState extends State<LocationTreeView> {
-  final GlobalKey<_LocationTreeViewState> key = GlobalKey<_LocationTreeViewState>();
+  static final GlobalKey<_LocationTreeViewState> key = GlobalKey<_LocationTreeViewState>();
   late final TreeController<LocationNode> treeController;
   var loc = Location(id: 'root', name: 'Locations', description: 'Locations');
   late final LocationNode root = LocationNode(location: loc);
@@ -57,9 +57,7 @@ class _LocationTreeViewState extends State<LocationTreeView> {
   }
 
   void refreshTree() {
-    if (treeController != null) {
-      treeController = TreeController<LocationNode>(
-    }
+    treeController = TreeController<LocationNode>(
       roots: [root],
       childrenProvider: (LocationNode node) => node.children,
     );
@@ -124,15 +122,6 @@ class _LocationTreeViewState extends State<LocationTreeView> {
     }
   }
 
-  void refreshTree() {
-    // fetchAndBuildTree();
-  }
-
-  // void fetchAndBuildTree() async {
-  //   setState(() {
-  //     roots = buildLocationTree(locations);
-  //   });
-  // }
 
   Future<void> buildLocationTree(LocationNode root) async {
     root.children.clear();
