@@ -196,29 +196,32 @@ class _LocationTreeViewState extends State<LocationTreeView> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return TreeView<LocationNode>(
-      treeController: treeController,
-      nodeBuilder: (BuildContext context, TreeEntry<LocationNode> entry) {
-        return TreeIndentation(
-          entry: entry,
-          child: Row(
-            children: [
-              FolderButton(
-                isOpen: entry.hasChildren ? entry.isExpanded : null,
-                onPressed: entry.hasChildren
-                    ? () {
-                        handleOnTap(entry, !entry.isExpanded);
-                      }
-                    : null,
-              ),
-              Flexible(
-                child: Text(entry.node.location.name),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
+Widget build(BuildContext context) {
+  return TreeView<LocationNode>(
+    treeController: treeController,
+    nodeBuilder: (BuildContext context, TreeEntry<LocationNode> entry) {
+      return TreeIndentation(
+        entry: entry,
+        child: Row(
+          children: [
+            FolderButton(
+              isOpen: entry.hasChildren ? entry.isExpanded : null,
+              onPressed: entry.hasChildren ? () {
+                handleOnTap(entry, !entry.isExpanded);
+              } : null,
+              openedIcon: Icon(Icons.folder, size: 24.0), // Custom opened folder icon
+              closedIcon: Icon(Icons.folder_open, size: 24.0),   
+              icon: Icon(Icons.add_box, size: 24.0)
+              // You can adjust other properties as needed
+            ),
+            Flexible(
+              child: Text(entry.node.location.name),
+            ),
+          ],
+        ),
+      );
+    },
+  );
+}
+
 }
