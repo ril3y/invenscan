@@ -1,5 +1,7 @@
 // ignore_for_file: prefer_const_constructors, library_private_types_in_public_api, use_super_parameters, use_build_context_synchronously
 
+import 'dart:math';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:basic_websocket/utils/api/location.dart';
@@ -60,14 +62,13 @@ class _LocationTreeViewState extends State<LocationTreeView> {
   }
 
   void refreshTree() {
-  buildLocationTree(root).then((_) {
-    setState(() {
-      isLoadingTree = false;
-      treeController.rebuild();
+    buildLocationTree(root).then((_) {
+      setState(() {
+        isLoadingTree = false;
+        treeController.rebuild();
+      });
     });
-  });
-}
-
+  }
 
   void confirmDeleteLocation(String locationId) async {
     try {
@@ -177,13 +178,18 @@ class _LocationTreeViewState extends State<LocationTreeView> {
         location); // Pass the selected location back to the parent widget
   }
 
-  void handleOnTap(TreeEntry<LocationNode> entry, bool isOpen) {
+  void handleOnTap(TreeEntry<LocationNode> entry, bool isExpanded) {
     print("handleOnTap called with node: ${entry.node.location.name}");
+
     if (entry.hasChildren) {
-      if (isOpen) {
-        treeController.collapseAll();
-        treeController.expand(root);
+      if (entry.level == 0) {
         treeController.expand(entry.node);
+      } else if (!isExpanded) {
+        treeController.collapseAll();
+        var path = findPathToNode(root, entry.node.location.id);
+        for (var node in path) {
+          treeController.expand(node);
+        }
       } else {
         treeController.collapse(entry.node);
       }
@@ -195,33 +201,86 @@ class _LocationTreeViewState extends State<LocationTreeView> {
     });
   }
 
-  @override
-Widget build(BuildContext context) {
-  return TreeView<LocationNode>(
-    treeController: treeController,
-    nodeBuilder: (BuildContext context, TreeEntry<LocationNode> entry) {
-      return TreeIndentation(
-        entry: entry,
-        child: Row(
-          children: [
-            FolderButton(
-              isOpen: entry.hasChildren ? entry.isExpanded : null,
-              onPressed: entry.hasChildren ? () {
-                handleOnTap(entry, !entry.isExpanded);
-              } : null,
-              openedIcon: Icon(Icons.folder, size: 24.0), // Custom opened folder icon
-              closedIcon: Icon(Icons.folder_open, size: 24.0),   
-              icon: Icon(Icons.add_box, size: 24.0)
-              // You can adjust other properties as needed
-            ),
-            Flexible(
-              child: Text(entry.node.location.name),
-            ),
-          ],
-        ),
-      );
-    },
-  );
-}
+  List<LocationNode> findPathToNode(LocationNode root, String nodeId) {
+    List<LocationNode> path = [];
 
+    void findNode(LocationNode currentNode) {
+      if (currentNode.location.id == nodeId) {
+        path.add(currentNode);
+        return;
+      }
+      for (var child in currentNode.children) {
+        findNode(child);
+        if (path.isNotEmpty) {
+          path.add(currentNode);
+          break;
+        }
+      }
+    }
+
+    findNode(root);
+    return path.reversed.toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      // Wrap with SingleChildScrollView for vertical scrolling
+      child: Column(
+        // Use Column to contain the TreeView
+        children: [
+          SizedBox(
+            // Use SizedBox to give a specific height
+            height: MediaQuery.of(context)
+                .size
+                .height, // Adjust the height as needed
+            child: TreeView<LocationNode>(
+              treeController: treeController,
+              nodeBuilder:
+                  (BuildContext context, TreeEntry<LocationNode> entry) {
+                bool isSelected =
+                    selectedLocation?.id == entry.node.location.id;
+                return TreeIndentation(
+                  entry: entry,
+                  child: Row(
+                    children: [
+                      FolderButton(
+                        isOpen: entry.hasChildren ? entry.isExpanded : null,
+                        onPressed: () {
+                          handleOnTap(entry, entry.isExpanded);
+                        },
+                        openedIcon: Icon(Icons.folder_open,
+                            size: 24.0), // Custom opened folder icon
+                        closedIcon: Icon(Icons.folder,
+                            size: 24.0), // Custom closed folder icon
+                        icon: Icon(Icons.add, size: 24.0),
+                      ),
+                      Flexible(
+                        child: InkWell(
+                          onTap: () => handleOnTap(entry, entry.isExpanded),
+                          child: Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: Text(
+                              entry.node.location.name,
+                              style: TextStyle(
+                                color: isSelected
+                                    ? Colors.blue
+                                    : Colors
+                                        .black, // Change text color if selected
+                                // Add other text styles as needed
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
