@@ -181,20 +181,29 @@ class _LocationTreeViewState extends State<LocationTreeView> {
         location); // Pass the selected location back to the parent widget
   }
 
-void handleOnTap(TreeEntry<LocationNode> entry, bool isOpen) {
-    // Toggle the expansion state based on the isOpen parameter
-    if (entry.hasChildren) {
-      if (isOpen) {
-        treeController.expand(entry.node);
-      } else {
-        treeController.collapse(entry.node);
-      }
+void collapseAllExcept(TreeEntry<LocationNode> entry) {
+  for (var node in treeController.allNodes) {
+    if (node != entry.node && node.isExpanded) {
+      treeController.collapse(node);
     }
-
-    setState(() {
-      // Update the state if necessary
-    });
   }
+}
+
+void handleOnTap(TreeEntry<LocationNode> entry, bool isOpen) {
+  // Toggle the expansion state based on the isOpen parameter
+  if (entry.hasChildren) {
+    if (isOpen) {
+      treeController.expand(entry.node);
+      collapseAllExcept(entry);
+    } else {
+      treeController.collapse(entry.node);
+    }
+  }
+
+  setState(() {
+    // Update the state if necessary
+  });
+}
 
   @override
   Widget build(BuildContext context) {
