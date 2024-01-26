@@ -33,6 +33,7 @@ class LocationTreeView extends StatefulWidget {
 }
 
 class _LocationTreeViewState extends State<LocationTreeView> {
+  final GlobalKey<_LocationTreeViewState> key = GlobalKey<_LocationTreeViewState>();
   late final TreeController<LocationNode> treeController;
   var loc = Location(id: 'root', name: 'Locations', description: 'Locations');
   late final LocationNode root = LocationNode(location: loc);
@@ -52,6 +53,10 @@ class _LocationTreeViewState extends State<LocationTreeView> {
   @override
   void initState() {
     super.initState();
+    refreshTree();
+  }
+
+  void refreshTree() {
     treeController = TreeController<LocationNode>(
       roots: [root],
       childrenProvider: (LocationNode node) => node.children,
