@@ -1,153 +1,266 @@
-import 'package:animated_tree_view/animated_tree_view.dart';
-import 'package:basic_websocket/utils/api/server_api.dart';
-import 'package:basic_websocket/utils/api/location.dart';
-import 'package:flutter/material.dart';
+// ignore_for_file: prefer_const_constructors, library_private_types_in_public_api, use_super_parameters, use_build_context_synchronously
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:basic_websocket/utils/api/location.dart';
+import 'package:basic_websocket/utils/api/server_api.dart';
+import 'package:flutter_fancy_tree_view/flutter_fancy_tree_view.dart';
 
+class LocationNode {
+  final Location location;
+  List<LocationNode> children;
 
-const showSnackBar = false;
-const expandChildrenOnReady = true;
-
-final Map<int, Color> colorMapper = {
-  0: Colors.white,
-  1: Colors.blueGrey[50]!,
-  2: Colors.blueGrey[100]!,
-  3: Colors.blueGrey[200]!,
-  4: Colors.blueGrey[300]!,
-  5: Colors.blueGrey[400]!,
-  6: Colors.blueGrey[500]!,
-  7: Colors.blueGrey[600]!,
-  8: Colors.blueGrey[700]!,
-  9: Colors.blueGrey[800]!,
-  10: Colors.blueGrey[900]!,
-};
-
-extension ColorUtil on Color {
-  Color byLuminance() =>
-      this.computeLuminance() > 0.4 ? Colors.black87 : Colors.white;
+  LocationNode({required this.location, List<LocationNode>? children})
+      : children = children ?? [];
+  void addChild(LocationNode child) {
+    children.add(child);
+  }
 }
 
 class LocationTreeView extends StatefulWidget {
   final Function(Location) onLocationSelected;
+  // final Function() refreshTree;
 
-  const LocationTreeView({Key? key, required this.onLocationSelected}) : super(key: key);
+  // const LocationTreeView(
+  //     {Key? key, required this.onLocationSelected, required this.refreshTree})
+  //     : super(key: key);
 
+  const LocationTreeView({Key? key, required this.onLocationSelected})
+      : super(key: key);
+
+  @override
   _LocationTreeViewState createState() => _LocationTreeViewState();
-  
 }
 
 class _LocationTreeViewState extends State<LocationTreeView> {
-  List<Location> topLevelLocations = [];
-  TreeViewController? _controller;
+  late final TreeController<LocationNode> treeController;
+  var loc = Location(id: 'root', name: 'Locations', description: 'Locations');
+  late final LocationNode root = LocationNode(location: loc);
+
+  Location? selectedLocation; // Variable to store the selected location ID
+  Set<String> expandedNodeIds = {}; // Set to track expanded nodes
+  late List<Location> locations;
+  List<LocationNode> roots = [];
+  bool isLoadingTree = true; // Add a new variable to track tree loading status
+
+  @override
+  void dispose() {
+    treeController.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
     super.initState();
-    // Initialization logic will be added here later
-    _fetchTopLevelLocations();
+    treeController = TreeController<LocationNode>(
+      roots: [root],
+      childrenProvider: (LocationNode node) => node.children,
+    );
+    buildLocationTree(root).then((_) {
+      setState(() {
+        isLoadingTree = false; // Update the state when tree is built
+      });
+    });
   }
 
-  void _fetchTopLevelLocations() async {
+  void confirmDeleteLocation(String locationId) async {
     try {
-      var locations = await ServerApi.fetchLocations();
-      setState(() {
-        topLevelLocations = locations;
-      });
+      var response = await ServerApi.previewDeleteLocation(locationId);
+
+      // Safely extract affected parts count
+      var affectedParts = 0;
+      if (response['affected_parts_count'] != null) {
+        affectedParts = response['affected_parts_count'] as int;
+      }
+
+      // Safely extract affected children count
+      var affectedChildren = 0;
+      if (response['affected_children_count'] != null) {
+        affectedChildren = response['affected_children_count'] as int;
+      }
+
+      bool? confirmDelete = await showDialog<bool>(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('Confirm Deletion'),
+            content: Text(
+                'Deleting this location will affect $affectedParts parts and $affectedChildren child locations. Do you want to proceed?'),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: Text('Confirm'),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (confirmDelete == true) {
+        var response = await ServerApi.deleteLocation(locationId);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Success: Deleted $locationId')),
+        );
+        if (kDebugMode) {
+          print("successfully deleted $locationId $response.body");
+        }
+      }
     } catch (e) {
-      // Handle errors, e.g., by showing a snackbar or logging
-      print('Failed to fetch top-level locations: $e');
+      // Handle errors
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
     }
   }
 
+  void refreshTree() {
+    // fetchAndBuildTree();
+  }
 
-
-  // atv.Node<Location> _buildNode(Location location) {
-  //   return atv.Node<Location>(
-  //     key: ValueKey(location.id),
-  //     content: location.name,
-  //     children: location.children.map(_buildNode).toList(),
-  //   );
+  // void fetchAndBuildTree() async {
+  //   setState(() {
+  //     roots = buildLocationTree(locations);
+  //   });
   // }
 
+  Future<void> buildLocationTree(LocationNode root) async {
+    root.children.clear();
+    Map<String, LocationNode> nodes = {};
 
+    locations = await ServerApi.fetchLocations();
 
- @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+    if (kDebugMode) {
+      print("buildLocationTree called");
+    }
+    // Initialize nodes for each location
+    for (var loc in locations) {
+      nodes[loc.id] = LocationNode(location: loc);
+    }
 
-      floatingActionButton: ValueListenableBuilder<bool>(
-        valueListenable: sampleTree.expansionNotifier,
-        builder: (context, isExpanded, _) {
-          return FloatingActionButton.extended(
-            onPressed: () {
-              if (sampleTree.isExpanded) {
-                _controller?.collapseNode(sampleTree);
-              } else {
-                _controller?.expandAllChildren(sampleTree);
-              }
-            },
-            label: isExpanded
-                ? const Text("Collapse all")
-                : const Text("Expand all"),
-          );
-        },
-      ),
-      body: TreeView.simple(
-        tree: sampleTree,
-        showRootNode: true,
-        expansionIndicatorBuilder: (context, node) =>
-            ChevronIndicator.rightDown(
-          tree: node,
-          color: Colors.blue[700],
-          padding: const EdgeInsets.all(8),
-        ),
-        indentation: const Indentation(style: IndentStyle.squareJoint),
-        onItemTap: (item) {
-          if (kDebugMode) print("Item tapped: ${item.key}");
-
-          if (showSnackBar) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text("Item tapped: ${item.key}"),
-                duration: const Duration(milliseconds: 750),
-              ),
-            );
+    // Assign children to their respective parent nodes
+    for (var loc in locations) {
+      if (loc.parentId == null) {
+        LocationNode _locationNode = LocationNode(location: loc);
+        root.children.add(_locationNode); // Top-level nodes
+      } else if (nodes.containsKey(loc.parentId)) {
+        for (var ln in root.children) {
+          if (ln.location.id == loc.parentId) {
+            ln.children.add(nodes[loc.id]!);
           }
-        },
-        onTreeReady: (controller) {
-          _controller = controller;
-          if (expandChildrenOnReady) controller.expandAllChildren(sampleTree);
-        },
-        builder: (context, node) => Card(
-          color: colorMapper[node.level.clamp(0, colorMapper.length - 1)]!,
-          child: ListTile(
-            title: Text("Item ${node.level}-${node.key}"),
-            subtitle: Text('Level ${node.level}'),
-          ),
-        ),
-      ),
-    );
+        }
+        nodes[loc.parentId]!.children.add(nodes[loc.id]!); // Children nodes
+      }
+    }
+  }
+
+  void _deleteLocation(String locationId) async {
+    try {
+      await ServerApi.deleteLocation(locationId);
+      // Optionally, show a confirmation message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Location deleted successfully')),
+      );
+      refreshTree(); // Refresh the tree to reflect the changes
+    } catch (e) {
+      // Handle errors, for example, show an error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to delete location: $e')),
+      );
+    }
+  }
+
+  void onLocationSelected(Location location) {
+    if (kDebugMode) {
+      print("Location selected: ${location.id}");
+    }
+    widget.onLocationSelected(
+        location); // Pass the selected location back to the parent widget
+  }
+
+void handleOnTap(TreeEntry<LocationNode> entry, bool isOpen) {
+    // Toggle the expansion state based on the isOpen parameter
+    if (entry.hasChildren) {
+      if (isOpen) {
+        treeController.expand(entry.node);
+      } else {
+        treeController.collapse(entry.node);
+      }
+    }
+
+    setState(() {
+      // Update the state if necessary
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return isLoadingTree
+        ? Center(child: CircularProgressIndicator())
+        : TreeView<LocationNode>(
+            treeController: treeController,
+            nodeBuilder: (BuildContext context, TreeEntry<LocationNode> entry) {
+              return TreeIndentation(
+                entry: entry,
+                guide: const IndentGuide.connectingLines(indent: 48),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(4, 8, 8, 8),
+                  child: Row(
+                    children: [
+                  FolderButton(
+                    isOpen: entry.hasChildren ? entry.isExpanded : null,
+                    onPressed: entry.hasChildren ? () {
+                      // Call handleOnTap with the current expansion state
+                      handleOnTap(entry, !entry.isExpanded);
+                    } : null, // Use an anonymous function here
+                  ),
+                  Flexible(
+                    child: Text(entry.node.location.name),
+                  ),
+                ],
+                  ),
+                ),
+              );
+            },
+          );
   }
 }
 
-final sampleTree = TreeNode.root()
-  ..addAll([
-    TreeNode(key: "0A")..add(TreeNode(key: "0A1A")),
-    TreeNode(key: "0C")
-      ..addAll([
-        TreeNode(key: "0C1A"),
-        TreeNode(key: "0C1B"),
-        TreeNode(key: "0C1C")
-          ..addAll([
-            TreeNode(key: "0C1C2A")
-              ..addAll([
-                TreeNode(key: "0C1C2A3A"),
-                TreeNode(key: "0C1C2A3B"),
-                TreeNode(key: "0C1C2A3C"),
-              ]),
-          ]),
-      ]),
-    TreeNode(key: "0D"),
-    TreeNode(key: "0E"),
-  ]);
+// class MyTreeTile extends StatelessWidget {
+//   final TreeEntry<LocationNode> entry;
+//   final VoidCallback onTap;
+
+//   const MyTreeTile({
+//     super.key,
+//     required this.entry,
+//     required this.onTap,
+//   });
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return InkWell(
+//       onTap: () {
+//         onTap(); // Call the onTap callback provided
+//       },
+    //   child: TreeIndentation(
+    //     entry: entry,
+    //     guide: const IndentGuide.connectingLines(indent: 48),
+    //     child: Padding(
+    //       padding: const EdgeInsets.fromLTRB(4, 8, 8, 8),
+    //       child: Row(
+    //         children: [
+    //           FolderButton(
+    //             isOpen: entry.hasChildren ? entry.isExpanded : null,
+    //             onPressed: entry.hasChildren ? onTap : null,
+    //           ),
+    //           Text(entry.node.location.name),
+    //         ],
+    //       ),
+    //     ),
+    //   ),
+    // );
+//   }
+// }
