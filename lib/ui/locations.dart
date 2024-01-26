@@ -42,7 +42,7 @@ class _LocationsWidgetState extends State<LocationsWidget> {
     });
   }
 
-  void _addLocation(LocationTreeView locationTreeView) async {
+  void _addLocation() async {
     String? parentId = selectedChildLocation?.id;
     if (parentId == "root") {
       parentId = null;
@@ -68,15 +68,10 @@ class _LocationsWidgetState extends State<LocationsWidget> {
       _parentIdController.clear();
       _nameController.clear();
       _descriptionController.clear();
-
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to add location: $e')),
       );
-    }
-
-     if (locationTreeViewKey.currentState != null) {
-      locationTreeViewKey.currentState!.refreshTree();
     }
   }
 
