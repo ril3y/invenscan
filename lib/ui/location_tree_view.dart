@@ -196,7 +196,8 @@ void handleOnTap(TreeEntry<LocationNode> entry, bool isOpen) {
   }
 
   setState(() {
-    // Update the state if necessary
+    selectedLocation = entry.node.location;
+    widget.onLocationSelected(selectedLocation!);
   });
 }
 

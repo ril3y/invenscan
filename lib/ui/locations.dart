@@ -27,13 +27,14 @@ class _LocationsWidgetState extends State<LocationsWidget> {
 
   void onLocationSelected(Location location) {
     setState(() {
-      selectedTopLevelLocation = location;
       if (location.name == "Locations") {
         //This is the default location and the new location
         //Will be a top level location
+        selectedTopLevelLocation = location;
         _parentIdController.text = "";
         selectedChildLocation = null;
       } else {
+        selectedChildLocation = location;
         _parentIdController.text = location.name;
       }
       // Optionally reset or update other related state variables
