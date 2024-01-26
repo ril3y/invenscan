@@ -68,13 +68,15 @@ class _LocationsWidgetState extends State<LocationsWidget> {
       _parentIdController.clear();
       _nameController.clear();
       _descriptionController.clear();
-      if (locationTreeView.key?.currentState != null) {
-        locationTreeView.key?.currentState?.refreshTree();
-      }
+
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to add location: $e')),
       );
+    }
+
+     if (locationTreeViewKey.currentState != null) {
+      locationTreeViewKey.currentState!.refreshTree();
     }
   }
 
