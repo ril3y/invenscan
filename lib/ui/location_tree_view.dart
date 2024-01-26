@@ -29,10 +29,10 @@ class LocationTreeView extends StatefulWidget {
       : super(key: key);
 
   @override
-  LocationTreeViewState createState() => LocationTreeViewState();
+  _LocationTreeViewState createState() => _LocationTreeViewState();
 }
 
-class LocationTreeViewState extends State<LocationTreeView> {
+class _LocationTreeViewState extends State<LocationTreeView> {
   late final TreeController<LocationNode> treeController;
   var loc = Location(id: 'root', name: 'Locations', description: 'Locations');
   late final LocationNode root = LocationNode(location: loc);
@@ -52,20 +52,22 @@ class LocationTreeViewState extends State<LocationTreeView> {
   @override
   void initState() {
     super.initState();
-    refreshTree();
-  }
-
-  void refreshTree() {
     treeController = TreeController<LocationNode>(
       roots: [root],
       childrenProvider: (LocationNode node) => node.children,
     );
-    buildLocationTree(root).then((_) {
-      setState(() {
-        isLoadingTree = false; // Update the state when tree is built
-      });
-    });
+    refreshTree();
   }
+
+  void refreshTree() {
+  buildLocationTree(root).then((_) {
+    setState(() {
+      isLoadingTree = false;
+      treeController.rebuild();
+    });
+  });
+}
+
 
   void confirmDeleteLocation(String locationId) async {
     try {
@@ -121,7 +123,6 @@ class LocationTreeViewState extends State<LocationTreeView> {
     }
   }
 
-
   Future<void> buildLocationTree(LocationNode root) async {
     root.children.clear();
     Map<String, LocationNode> nodes = {};
@@ -176,26 +177,48 @@ class LocationTreeViewState extends State<LocationTreeView> {
         location); // Pass the selected location back to the parent widget
   }
 
+  void handleOnTap(TreeEntry<LocationNode> entry, bool isOpen) {
+    print("handleOnTap called with node: ${entry.node.location.name}");
+    if (entry.hasChildren) {
+      if (isOpen) {
+        treeController.collapseAll();
+        treeController.expand(root);
+        treeController.expand(entry.node);
+      } else {
+        treeController.collapse(entry.node);
+      }
+    }
 
+    setState(() {
+      selectedLocation = entry.node.location;
+      widget.onLocationSelected(selectedLocation!);
+    });
+  }
 
-
-  
   @override
   Widget build(BuildContext context) {
-    return isLoadingTree
-        ? CircularProgressIndicator()
-        : FancyTreeView<LocationNode>(
-            controller: treeController,
-            nodeBuilder: (BuildContext context, TreeEntry<LocationNode> entry) {
-              return ListTile(
-                title: Text(entry.node.location.name),
-                onTap: () => onLocationSelected(entry.node.location),
-                trailing: IconButton(
-                  icon: Icon(Icons.delete),
-                  onPressed: () => confirmDeleteLocation(entry.node.location.id),
-                ),
-              );
-            },
-          );
+    return TreeView<LocationNode>(
+      treeController: treeController,
+      nodeBuilder: (BuildContext context, TreeEntry<LocationNode> entry) {
+        return TreeIndentation(
+          entry: entry,
+          child: Row(
+            children: [
+              FolderButton(
+                isOpen: entry.hasChildren ? entry.isExpanded : null,
+                onPressed: entry.hasChildren
+                    ? () {
+                        handleOnTap(entry, !entry.isExpanded);
+                      }
+                    : null,
+              ),
+              Flexible(
+                child: Text(entry.node.location.name),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
-  }
+}

@@ -9,11 +9,11 @@ class Balloon extends StatelessWidget {
   final EdgeInsetsGeometry padding;
 
   const Balloon({
-    Key? key,
+    super.key,
     required this.text,
     this.color = Colors.blue,
     this.padding = const EdgeInsets.all(8.0),
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

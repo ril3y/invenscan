@@ -5,7 +5,7 @@ import '../../part_data.dart';
 class EditPartScreen extends StatefulWidget {
   final PartData part;
 
-  const EditPartScreen({Key? key, required this.part}) : super(key: key);
+  const EditPartScreen({super.key, required this.part});
 
   @override
   _EditPartScreenState createState() => _EditPartScreenState();

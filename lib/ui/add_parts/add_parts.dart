@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:basic_websocket/ui/add_parts/edit_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
 import 'package:basic_websocket/scanner_service.dart';
 import 'package:basic_websocket/part_data.dart';
@@ -11,14 +10,13 @@ import 'package:basic_websocket/ui/question_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:basic_websocket/utils/nfc_manager.dart';
 import 'package:basic_websocket/ui/status_bar.dart';
-import 'package:basic_websocket/utils/api/server_api.dart';
 import 'package:basic_websocket/ui/add_parts/add_part_form.dart';
 
 
 class AddParts extends StatefulWidget {
   final WebSocketManager webSocketManager;
 
-  const AddParts({Key? key, required this.webSocketManager}) : super(key: key);
+  const AddParts({super.key, required this.webSocketManager});
 
   @override
   _AddPartsState createState() => _AddPartsState();
@@ -78,7 +76,7 @@ class _AddPartsState extends State<AddParts> {
     print("Part Added : $data");
     var decodedData = jsonDecode(data);
 
-    setState(() {
+    setState(() { 
       parts.add(PartData.fromJson(
           decodedData['data'])); // Add the new part to the list
     });
@@ -91,28 +89,23 @@ class _AddPartsState extends State<AddParts> {
       Map<String, dynamic> partData = jsonData['data'];
 
       // Check if partData is not null and has the expected structure
-      if (partData != null) {
-        // Add the new part to the list and update UI
-        setState(() {
-          parts.add(PartData.fromJson(partData));
-        });
+      // Add the new part to the list and update UI
+      setState(() {
+        parts.add(PartData.fromJson(partData));
+      });
 
-        // Handle NFC writing if required
-        bool nfcWriteSuccess = await _handleNFCScan(partData);
-        if (nfcWriteSuccess) {
-          // NFC write was successful
-          ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('NFC Tag Written Successfully!')));
-        } else {
-          // NFC write failed or was not performed
-          ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('NFC Tag Writing Skipped.')));
-        }
+      // Handle NFC writing if required
+      bool nfcWriteSuccess = await _handleNFCScan(partData);
+      if (nfcWriteSuccess) {
+        // NFC write was successful
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('NFC Tag Written Successfully!')));
       } else {
-        // Handle case where partData is null or not as expected
-        print("Error: partData is null or malformed.");
+        // NFC write failed or was not performed
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('NFC Tag Writing Skipped.')));
       }
-    } else {
+        } else {
       // Handle case where jsonData does not contain the expected event
       print("Error: Unexpected jsonData structure or event type.");
     }
@@ -130,7 +123,7 @@ class _AddPartsState extends State<AddParts> {
 
   void _initiateScan() async {
     try {
-      List<int> barcodeData = await _scannerService.scan();
+      List<int> barcodeData = await _scannerService.scanBarcode();
       String base64EncodedData = base64.encode(barcodeData);
       Map<String, dynamic> dataToSend = {
         'clientId': randomUuid,
@@ -276,10 +269,16 @@ class _AddPartsState extends State<AddParts> {
   }
 
 
-  void _navigateToAddPartForm() {
-  Navigator.of(context).push(
-    MaterialPageRoute(builder: (_) => AddPartForm()),
+void _navigateToAddPartForm() async {
+  final response = await Navigator.of(context).push(
+    MaterialPageRoute(builder: (_) => const AddPartForm()),
   );
+
+  if (response != null) {
+    // Handle the response here
+  handleOnPartAdded(response);
+    print("Response from AddPartForm: $response");
+  }
 }
 
 

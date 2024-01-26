@@ -5,7 +5,7 @@ import '../part_data.dart';
 import 'add_parts/edit_screen.dart';
 
 class CustomTableScreen extends StatefulWidget {
-  const CustomTableScreen({Key? key}) : super(key: key);
+  const CustomTableScreen({super.key});
 
   @override
   _CustomTableScreenState createState() => _CustomTableScreenState();

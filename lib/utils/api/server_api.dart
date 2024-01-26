@@ -2,8 +2,6 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'location.dart';
-import 'package:http/http.dart' as http;
-import 'dart:io';
 
 class ServerApi {
   static Future<String> _getServerUrl() async {
@@ -38,7 +36,7 @@ class ServerApi {
     }
   }
 
-    static Future<Map<String, dynamic>> addLocation(
+  static Future<Map<String, dynamic>> addLocation(
       Map<String, dynamic> partData) async {
     String baseUrl = await _getServerUrl();
     var url = Uri.parse('$baseUrl/add_location/');
@@ -62,7 +60,7 @@ class ServerApi {
     String baseUrl = await _getServerUrl();
 
     var request =
-        http.MultipartRequest('POST', Uri.parse('$baseUrl/upload_image'));
+        http.MultipartRequest('POST', Uri.parse('$baseUrl/upload_image/'));
     request.files.add(await http.MultipartFile.fromPath('file', imagePath));
 
     var response = await request.send();
@@ -74,18 +72,17 @@ class ServerApi {
     }
   }
 
-static Future<Map<String, dynamic>> getCounts() async {
-  String baseUrl = await _getServerUrl();
-  var url = Uri.parse('$baseUrl/get_counts');
-  var response = await http.get(url);
-  if (response.statusCode == 200) {
-    var data = jsonDecode(response.body);
-    return data; // Now correctly returning a Map<String, dynamic>
-  } else {
-    throw Exception('Failed to load counts');
+  static Future<Map<String, dynamic>> getCounts() async {
+    String baseUrl = await _getServerUrl();
+    var url = Uri.parse('$baseUrl/get_counts');
+    var response = await http.get(url);
+    if (response.statusCode == 200) {
+      var data = jsonDecode(response.body);
+      return data; // Now correctly returning a Map<String, dynamic>
+    } else {
+      throw Exception('Failed to load counts');
+    }
   }
-}
-
 
   static Future<List<Location>> getLocationDetails(String locationId) async {
     String baseUrl = await _getServerUrl();
@@ -94,30 +91,60 @@ static Future<Map<String, dynamic>> getCounts() async {
 
     if (response.statusCode == 200) {
       List<dynamic> data = jsonDecode(response.body);
-      return data.map((locationData) => Location.fromJson(locationData)).toList();
+      return data
+          .map((locationData) => Location.fromJson(locationData))
+          .toList();
     } else {
-      throw Exception('Failed to load location details. Status code: ${response.statusCode}');
+      throw Exception(
+          'Failed to load location details. Status code: ${response.statusCode}');
     }
   }
 
+  static Future<http.Response> deleteLocation(String locationId) async {
+    String baseUrl = await _getServerUrl();
+    var url = Uri.parse('$baseUrl/delete_location/$locationId');
+    var response = await http.delete(url);
+
+    if (response.statusCode != 200) {
+      // You can handle different status codes differently if needed
+      throw Exception(
+          'Failed to delete location. Status code: ${response.statusCode}');
+    }
+    return response;
+
+    // If the deletion is successful, no return is needed. You can also handle
+    // any response data here if your API provides it.
+  }
+
+static Future<Map<String, dynamic>> previewDeleteLocation(String locationId) async {
+  String baseUrl = await _getServerUrl();
+  var url = Uri.parse('$baseUrl/preview-delete/$locationId');
+  var response = await http.get(url);
+
+  if (response.statusCode == 200) {
+    return jsonDecode(response.body);
+  } else {
+    throw Exception('Failed to preview delete location. Status code: ${response.statusCode}');
+  }
+}
+
+
   static Future<List<Location>> fetchLocations() async {
     String baseUrl = await _getServerUrl();
-    var url = Uri.parse(
-        '$baseUrl/get_all_locations'); // Adjust the endpoint as necessary
+    var url = Uri.parse('$baseUrl/get_all_locations/');
     var response = await http.get(url);
 
     if (response.statusCode == 200) {
-      var responseBody =
-          jsonDecode(response.body); // Decode JSON from the response body
+      var responseBody = jsonDecode(response.body);
       List<Location> allLocations = (responseBody['locations'] as List)
           .map((locationJson) => Location.fromJson(locationJson))
           .toList();
 
-      // Filter locations where 'parent_id' is null
-      List<Location> locationsWithoutParent =
-          allLocations.where((location) => location.parentId == null).toList();
+      // // Filter locations where 'parent_id' is null
+      // List<Location> locationsWithoutParent =
+      //     allLocations.where((location) => location.parentId == null).toList();
 
-      return locationsWithoutParent;
+      return allLocations;
     } else {
       throw Exception('Failed to load locations');
     }

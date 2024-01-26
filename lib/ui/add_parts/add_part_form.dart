@@ -1,15 +1,18 @@
+import 'dart:io';
+
 import 'package:basic_websocket/scanner_service.dart';
 import 'package:basic_websocket/utils/api/server_api_exception.dart';
 import 'package:flutter/material.dart';
 import 'package:basic_websocket/utils/api/server_api.dart';
 import 'package:basic_websocket/utils/api/location.dart';
 import 'package:basic_websocket/utils/camera_capture.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:path/path.dart' as path;
 import 'package:flutter/services.dart';
 import 'package:basic_websocket/utils/api/partmodel.dart';
+import 'package:basic_websocket/ui/location_tree_view.dart';
 
 class AddPartForm extends StatefulWidget {
+  const AddPartForm({super.key});
+
   @override
   _AddPartFormState createState() => _AddPartFormState();
 }
@@ -24,33 +27,33 @@ class _AddPartFormState extends State<AddPartForm> {
   final ScannerService _scannerService = ScannerService();
 
   Location? _selectedLocation;
-  List<Location> _locations = [];
   String? _imagePath;
 
   @override
   void initState() {
     super.initState();
-    _loadLocations(); // Call _loadLocations to fetch and set the locations
   }
 
-  Future<void> _takePicture() async {
-    if (!_camera!.value.isInitialized) {
-      print('Error: Camera not initialized');
-      return;
-    }
-    if (_camera!.value.isTakingPicture) {
-      // A capture is already pending, do nothing.
-      return;
-    }
-    try {
-      // Attempt to take a picture and get the file `imagePath` where it was saved.
-      final image = await _camera!.takePicture();
+  // Handle location selection from LocationTreeView
+  void _onLocationSelected(Location selectedLocation) {
+    setState(() {
+      _selectedLocation = selectedLocation;
+    });
+  }
+
+  void _refreshLocationTree() {
+    // Implement if needed. For example, you could call setState here
+  }
+
+  Future<void> _navigateAndCaptureImage() async {
+    final capturedImage = await Navigator.push<File>(
+      context,
+      MaterialPageRoute(builder: (context) => const CameraCaptureScreen()),
+    );
+    if (capturedImage != null) {
       setState(() {
-        _imagePath = image.path;
+        _imagePath = capturedImage.path;
       });
-    } catch (e) {
-      print(e);
-      return;
     }
   }
 
@@ -64,11 +67,6 @@ class _AddPartFormState extends State<AddPartForm> {
     super.dispose();
   }
 
-  void _loadLocations() async {
-    _locations = await ServerApi.fetchLocations();
-    setState(() {});
-  }
-
   void _showErrorDialog(String title, String message) {
     showDialog(
       context: context,
@@ -78,7 +76,7 @@ class _AddPartFormState extends State<AddPartForm> {
           content: Text(message),
           actions: <Widget>[
             TextButton(
-              child: Text('OK'),
+              child: const Text('OK'),
               onPressed: () {
                 Navigator.of(context).pop();
               },
@@ -89,13 +87,13 @@ class _AddPartFormState extends State<AddPartForm> {
     );
   }
 
-   Widget _buildPartNumberField() {
+  Widget _buildPartNumberField() {
     return TextField(
       controller: _partNumberController,
       decoration: InputDecoration(
         labelText: 'Part Number',
         suffixIcon: IconButton(
-          icon: Icon(Icons.qr_code_scanner),
+          icon: const Icon(Icons.qr_code_scanner),
           onPressed: _scanPartNumber,
         ),
       ),
@@ -113,6 +111,24 @@ class _AddPartFormState extends State<AddPartForm> {
     }
   }
 
+  Widget _buildImagePreview() {
+    return _imagePath == null
+        ? Container()
+        : Stack(
+            alignment: Alignment.topRight,
+            children: [
+              Image.file(File(_imagePath!), fit: BoxFit.cover),
+              IconButton(
+                icon: const Icon(Icons.delete, color: Colors.red),
+                onPressed: () {
+                  setState(() {
+                    _imagePath = null;
+                  });
+                },
+              ),
+            ],
+          );
+  }
 
   @override
 Widget build(BuildContext context) {
@@ -125,62 +141,88 @@ Widget build(BuildContext context) {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
+          // Text Field for Part Name
           TextField(
             controller: _partNameController,
             decoration: const InputDecoration(labelText: 'Part Name'),
           ),
+
+          // Text Field for Part Number with QR Code Scanner
           TextField(
             controller: _partNumberController,
             decoration: InputDecoration(
               labelText: 'Part Number',
               suffixIcon: IconButton(
-                icon: Icon(Icons.qr_code_scanner),
-                onPressed: _scanPartNumber,  // Use the scanning method here
+                icon: const Icon(Icons.qr_code_scanner),
+                onPressed: _scanPartNumber,
               ),
             ),
           ),
+
+          // Text Field for Supplier
           TextField(
             controller: _supplierController,
             decoration: const InputDecoration(labelText: 'Supplier'),
           ),
+
+          // Text Field for Quantity
           TextField(
             controller: _quantityController,
             decoration: const InputDecoration(labelText: 'Quantity'),
             keyboardType: TextInputType.number,
             inputFormatters: [
-              FilteringTextInputFormatter.digitsOnly
-            ], // Accepts only numbers
+              FilteringTextInputFormatter.digitsOnly,
+            ],
           ),
+
+          // Text Field for Description
           TextField(
             controller: _descriptionController,
             decoration: const InputDecoration(labelText: 'Description'),
           ),
-          DropdownButtonFormField<Location>(
-            value: _selectedLocation,
-            onChanged: (Location? newValue) {
-              setState(() {
-                _selectedLocation = newValue;
-              });
-            },
-            items: _locations
-                .map<DropdownMenuItem<Location>>((Location location) {
-              return DropdownMenuItem<Location>(
-                value: location,
-                child: Text(location.name),
-              );
-            }).toList(),
+
+         SizedBox(
+            height: 300, // Set a fixed height
+            child: LocationTreeView(
+              onLocationSelected: _onLocationSelected,
+              // refreshTree: _refreshLocationTree,
+            ),
           ),
+
           const SizedBox(height: 20),
+
+          // Button to Submit Form
           ElevatedButton(
             onPressed: _submitForm,
             child: const Text('Add Part'),
           ),
+
+          // Button to Capture Image
           ElevatedButton(
-            onPressed: _takePicture,
+            onPressed: _navigateAndCaptureImage,
             child: const Text('Take Picture'),
           ),
+
+          // Image Preview with Delete Option
           if (_imagePath != null)
-            Image.file(File(_imagePath!)),
+            Stack(
+              alignment: Alignment.topRight,
+              children: [
+                SizedBox(
+                  width: MediaQuery.of(context).size.width,
+                  height: MediaQuery.of(context).size.width,
+                  child: Image.file(File(_imagePath!), fit: BoxFit.cover),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete, color: Colors.red),
+                  onPressed: () {
+                    setState(() {
+                      _imagePath = null;
+                    });
+                  },
+                ),
+              ],
+            ),
         ],
       ),
     ),
@@ -210,7 +252,6 @@ Widget build(BuildContext context) {
 
       var response = await ServerApi.addPart(partData.toJson());
       Navigator.of(context).pop(response);
-
     } on ServerApiException catch (apiException) {
       // Handle specific API errors
       //_showErrorDialog('Failed to submit part', apiException.message);

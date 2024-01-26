@@ -6,10 +6,10 @@ class AddDialog extends StatefulWidget {
   final List<String> userInputRequirements;
 
   const AddDialog({
-    Key? key,
+    super.key,
     this.category = '',
     required this.onDataFetch, required this.userInputRequirements, // Pass the parser instance
-  }) : super(key: key);
+  });
 
   @override
   _AddDialogState createState() => _AddDialogState();

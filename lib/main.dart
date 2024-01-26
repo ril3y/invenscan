@@ -1,27 +1,26 @@
+// ignore_for_file: prefer_const_constructors
+
 import 'package:basic_websocket/ui/styles.dart';
 import 'package:basic_websocket/utils/api/server_api.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'dart:math';
-import 'utils/websocket.dart'; // Adjust the import path to match your project structure
-import 'ui/add_parts/add_parts.dart'; // Adjust the import path as needed
-import 'ui/search.dart'; // Adjust the import path as needed
+import 'utils/websocket.dart';
+import 'ui/add_parts/add_parts.dart'; 
+import 'ui/search.dart'; 
 import 'ui/settings.dart';
 import 'ui/status_bar.dart';
-import 'dart:convert';
 import 'utils/fade_route.dart';
-import 'package:provider/provider.dart';
-import 'package:basic_websocket/ui/InvenBarChart.dart';
-import 'package:basic_websocket/ui/locations.dart'; // Ensure this import is correct
+import 'package:basic_websocket/ui/locations.dart';
 
 void main() {
   runApp(
     const IvenScanner(),
   );
 }
-import 'package:basic_websocket/ui/locations.dart'; // Adjust the import path as needed
 
 class IvenScanner extends StatelessWidget {
-  const IvenScanner({Key? key}) : super(key: key);
+  const IvenScanner({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -47,7 +46,7 @@ class IvenScanner extends StatelessWidget {
 class MyInvenScan extends StatefulWidget {
   final String title;
 
-  const MyInvenScan({Key? key, required this.title}) : super(key: key);
+  const MyInvenScan({super.key, required this.title});
 
   @override
   State<MyInvenScan> createState() => _MyInvenScanState();
@@ -62,7 +61,7 @@ class _MyInvenScanState extends State<MyInvenScan> {
   @override
   void initState() {
     super.initState();
-    webSocketManager = WebSocketManager(); // Initialize WebSocketManager
+    webSocketManager = WebSocketManager();
     webSocketManager.addOnReceiveHandler(handleOnReceive);
     webSocketManager.addOnConnectionChangedHandler(_onConnectionChanged);
     webSocketManager.startConnection();
@@ -80,9 +79,9 @@ class _MyInvenScanState extends State<MyInvenScan> {
   }
 
   void handleOnReceive(dynamic data) {
-    // Process data received from WebSocket
-    // Implement your logic here
-    print("Data from the server in InvenScan : $data");
+    if (kDebugMode) {
+      print("Data from the server in InvenScan : $data");
+    }
   }
 
   void _onConnectionChanged(bool isConnected) {
@@ -112,7 +111,7 @@ Widget _buildStatCard(String title, int count, IconData icon, Color color) {
         style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color),
       ),
       onTap: title == "Locations" ? () {
-        Navigator.of(context).push(MaterialPageRoute(builder: (_) => LocationsScreen()));
+        Navigator.of(context).push(MaterialPageRoute(builder: (_) => LocationsWidget()));
       } : null,
     ),
   );
@@ -169,14 +168,6 @@ Widget _buildStatCard(String title, int count, IconData icon, Color color) {
             ),
           ],
         ),
-        onTap: () {
-          if (title == "Locations") {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => LocationsScreen()),
-            );
-          }
-        },
       ),
        body: Padding(
       padding: const EdgeInsets.all(16.0),

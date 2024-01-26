@@ -4,7 +4,7 @@ import 'dart:convert';
 class QuestionsDialog extends StatelessWidget {
   final String jsonData;
 
-  const QuestionsDialog({Key? key, required this.jsonData}) : super(key: key);
+  const QuestionsDialog({super.key, required this.jsonData});
 
   @override
   Widget build(BuildContext context) {

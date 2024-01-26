@@ -9,9 +9,10 @@ class PartData {
   PartData(this.supplier, this.partNumber, this.quantity, this.jsonData);
 
   factory PartData.fromJson(Map<String, dynamic> json) {
-    var supplier = json['supplier'] as String;
-    var partNumber = json['part_number'] as String;
-    var quantity = json['quantity'] as int; // Extract quantity from JSON
+    var supplier = json['supplier'] ?? ""; // Default to empty string if null
+    var partNumber = json['part_number'] ?? ""; // Default to empty string if null
+    var quantity = json['quantity'] ?? 0; // Default to 0 if null
+
     var jsonData = json;
     return PartData(supplier, partNumber, quantity,
         json); // Pass the entire JSON to the constructor

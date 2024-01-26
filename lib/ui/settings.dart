@@ -37,8 +37,7 @@ class ServerInfo {
 class SettingsScreen extends StatefulWidget {
   final WebSocketManager webSocketManager;
 
-  const SettingsScreen({Key? key, required this.webSocketManager})
-      : super(key: key);
+  const SettingsScreen({super.key, required this.webSocketManager});
   @override
   _SettingsScreenState createState() => _SettingsScreenState();
 }

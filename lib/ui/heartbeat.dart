@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 class HeartbeatIcon extends StatefulWidget {
   final WebSocketManager webSocketManager;
 
-  const HeartbeatIcon({Key? key, required this.webSocketManager}) : super(key: key);
+  const HeartbeatIcon({super.key, required this.webSocketManager});
 
   @override
   _HeartbeatIconState createState() => _HeartbeatIconState();

@@ -9,10 +9,10 @@ class InputDialog extends StatefulWidget {
   final WebSocketManager webSocketManager;
 
   const InputDialog({
-    Key? key,
+    super.key,
     required this.jsonData,
     required this.webSocketManager,
-  }) : super(key: key);
+  });
 
   @override
   _InputDialogState createState() => _InputDialogState();

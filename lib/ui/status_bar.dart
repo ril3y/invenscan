@@ -8,7 +8,7 @@ bool isConnectedGlobal = false;
 class StatusBar extends StatefulWidget {
   final WebSocketManager webSocketManager;
 
-  const StatusBar({Key? key, required this.webSocketManager}) : super(key: key);
+  const StatusBar({super.key, required this.webSocketManager});
 
   @override
   _StatusBarState createState() => _StatusBarState();
