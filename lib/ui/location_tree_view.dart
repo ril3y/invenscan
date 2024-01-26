@@ -178,29 +178,24 @@ class LocationTreeViewState extends State<LocationTreeView> {
 
 
 
-void handleOnTap(TreeEntry<LocationNode> entry, bool isOpen) {
-  print("handleOnTap called with node: ${entry.node.location.name}");
-  if (entry.hasChildren) {
-    if (isOpen) {
-      treeController.collapseAll();
-      treeController.expand(root);
-      treeController.expand(entry.node);
-    } else {
-      treeController.collapse(entry.node);
-    }
-  }
 
-  setState(() {
-    selectedLocation = entry.node.location;
-    widget.onLocationSelected(selectedLocation!);
-  });
-}
-
-  static final GlobalKey<LocationTreeViewState> key = GlobalKey<LocationTreeViewState>();
   
   @override
   Widget build(BuildContext context) {
-    // TODO: implement build
-    throw UnimplementedError();
+    return isLoadingTree
+        ? CircularProgressIndicator()
+        : FancyTreeView<LocationNode>(
+            controller: treeController,
+            nodeBuilder: (BuildContext context, TreeEntry<LocationNode> entry) {
+              return ListTile(
+                title: Text(entry.node.location.name),
+                onTap: () => onLocationSelected(entry.node.location),
+                trailing: IconButton(
+                  icon: Icon(Icons.delete),
+                  onPressed: () => confirmDeleteLocation(entry.node.location.id),
+                ),
+              );
+            },
+          );
   }
   }
