@@ -32,7 +32,7 @@ class LocationTreeView extends StatefulWidget {
   _LocationTreeViewState createState() => _LocationTreeViewState();
 }
 
-class _LocationTreeViewState extends State<LocationTreeView> {
+class LocationTreeViewState extends State<LocationTreeView> {
   static final GlobalKey<_LocationTreeViewState> key = GlobalKey<_LocationTreeViewState>();
   late final TreeController<LocationNode> treeController;
   var loc = Location(id: 'root', name: 'Locations', description: 'Locations');
