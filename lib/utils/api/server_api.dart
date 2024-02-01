@@ -2,6 +2,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'location.dart';
+import 'category.dart' as category;
 
 class ServerApi {
   static Future<String> _getServerUrl() async {
@@ -84,6 +85,59 @@ class ServerApi {
     }
   }
 
+  static Future<Map<String, dynamic>> performSearch(
+      String query, String searchType) async {
+    String baseUrl = await _getServerUrl();
+    var url = Uri.parse(
+        '$baseUrl/search/$query?search_type=$searchType'); // Assuming your API has a searchType parameter
+    var response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      var data = jsonDecode(response.body);
+      return {
+        'searchResults': (data['search_results'] as List<dynamic>)
+            .map((result) => result as Map<String, dynamic>)
+            .toList(),
+        'suggestions': data['suggestions']
+      };
+    } else {
+      throw Exception(
+          'Failed to perform search. Status code: ${response.statusCode}');
+    }
+  }
+
+  static Future<Map<String, dynamic>> getLocationPath(String locationId) async {
+    try {
+      String baseUrl = await _getServerUrl();
+      var url = Uri.parse('$baseUrl/get_location_path/$locationId');
+      var response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        // Parsing the response assuming it's a Map
+        var data = jsonDecode(response.body);
+        if (data is Map<String, dynamic>) {
+          return data;
+        } else {
+          throw Exception('Unexpected response format');
+        }
+      } else {
+        // Handle different response status codes as needed
+        print('Server responded with status code: ${response.statusCode}');
+        throw Exception(
+            'Failed to load location path. Status code: ${response.statusCode}');
+      }
+    } on http.ClientException catch (e) {
+      // Handle client-side errors
+      print('ClientException occurred: $e');
+      throw Exception('Failed to load location path due to client error: $e');
+    } catch (e) {
+      // Handle any other types of exceptions
+      print('An unexpected error occurred: $e');
+      throw Exception(
+          'Failed to load location path due to unexpected error: $e');
+    }
+  }
+
   static Future<List<Location>> getLocationDetails(String locationId) async {
     String baseUrl = await _getServerUrl();
     var url = Uri.parse('$baseUrl/get_location_details/$locationId');
@@ -116,18 +170,19 @@ class ServerApi {
     // any response data here if your API provides it.
   }
 
-static Future<Map<String, dynamic>> previewDeleteLocation(String locationId) async {
-  String baseUrl = await _getServerUrl();
-  var url = Uri.parse('$baseUrl/preview-delete/$locationId');
-  var response = await http.get(url);
+  static Future<Map<String, dynamic>> previewDeleteLocation(
+      String locationId) async {
+    String baseUrl = await _getServerUrl();
+    var url = Uri.parse('$baseUrl/preview-delete/$locationId');
+    var response = await http.get(url);
 
-  if (response.statusCode == 200) {
-    return jsonDecode(response.body);
-  } else {
-    throw Exception('Failed to preview delete location. Status code: ${response.statusCode}');
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception(
+          'Failed to preview delete location. Status code: ${response.statusCode}');
+    }
   }
-}
-
 
   static Future<List<Location>> fetchLocations() async {
     String baseUrl = await _getServerUrl();
@@ -147,6 +202,25 @@ static Future<Map<String, dynamic>> previewDeleteLocation(String locationId) asy
       return allLocations;
     } else {
       throw Exception('Failed to load locations');
+    }
+  }
+
+  static Future<List<category.Category>> fetchCategories() async {
+    String baseUrl = await _getServerUrl();
+    var url = Uri.parse(
+        '$baseUrl/get_all_categories/'); // Adjust the endpoint as necessary
+    var response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      var responseBody = jsonDecode(response.body);
+      List<category.Category> allCategories = (responseBody['categories']
+              as List) // Ensure the key matches your JSON structure
+          .map((categoryJson) => category.Category.fromJson(categoryJson))
+          .toList();
+
+      return allCategories;
+    } else {
+      throw Exception('Failed to load categories');
     }
   }
 }

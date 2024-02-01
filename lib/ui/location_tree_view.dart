@@ -1,6 +1,5 @@
 // ignore_for_file: prefer_const_constructors, library_private_types_in_public_api, use_super_parameters, use_build_context_synchronously
 
-import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -141,8 +140,8 @@ class _LocationTreeViewState extends State<LocationTreeView> {
     // Assign children to their respective parent nodes
     for (var loc in locations) {
       if (loc.parentId == null) {
-        LocationNode _locationNode = LocationNode(location: loc);
-        root.children.add(_locationNode); // Top-level nodes
+        LocationNode locationNode = LocationNode(location: loc);
+        root.children.add(locationNode); // Top-level nodes
       } else if (nodes.containsKey(loc.parentId)) {
         for (var ln in root.children) {
           if (ln.location.id == loc.parentId) {
@@ -222,65 +221,58 @@ class _LocationTreeViewState extends State<LocationTreeView> {
     return path.reversed.toList();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      // Wrap with SingleChildScrollView for vertical scrolling
-      child: Column(
-        // Use Column to contain the TreeView
-        children: [
-          SizedBox(
-            // Use SizedBox to give a specific height
-            height: MediaQuery.of(context)
-                .size
-                .height, // Adjust the height as needed
-            child: TreeView<LocationNode>(
-              treeController: treeController,
-              nodeBuilder:
-                  (BuildContext context, TreeEntry<LocationNode> entry) {
-                bool isSelected =
-                    selectedLocation?.id == entry.node.location.id;
-                return TreeIndentation(
-                  entry: entry,
-                  child: Row(
-                    children: [
-                      FolderButton(
-                        isOpen: entry.hasChildren ? entry.isExpanded : null,
-                        onPressed: () {
-                          handleOnTap(entry, entry.isExpanded);
-                        },
-                        openedIcon: Icon(Icons.folder_open,
-                            size: 24.0), // Custom opened folder icon
-                        closedIcon: Icon(Icons.folder,
-                            size: 24.0), // Custom closed folder icon
-                        icon: Icon(Icons.add, size: 24.0),
-                      ),
-                      Flexible(
-                        child: InkWell(
-                          onTap: () => handleOnTap(entry, entry.isExpanded),
-                          child: Padding(
-                            padding: EdgeInsets.all(8.0),
-                            child: Text(
-                              entry.node.location.name,
-                              style: TextStyle(
-                                color: isSelected
-                                    ? Colors.blue
-                                    : Colors
-                                        .black, // Change text color if selected
-                                // Add other text styles as needed
+@override
+Widget build(BuildContext context) {
+  return LayoutBuilder(
+    builder: (BuildContext context, BoxConstraints constraints) {
+      return SingleChildScrollView(
+        child: Column(
+          children: [
+            SizedBox(
+              height: constraints.maxHeight, // Set the height to the maximum available height
+              child: TreeView<LocationNode>(
+                treeController: treeController,
+                nodeBuilder: (BuildContext context, TreeEntry<LocationNode> entry) {
+                  bool isSelected = selectedLocation?.id == entry.node.location.id;
+                  return TreeIndentation(
+                    entry: entry,
+                    child: Row(
+                      children: [
+                        FolderButton(
+                          isOpen: entry.hasChildren ? entry.isExpanded : null,
+                          onPressed: () {
+                            handleOnTap(entry, entry.isExpanded);
+                          },
+                          openedIcon: Icon(Icons.folder_open, size: 24.0), // Custom opened folder icon
+                          closedIcon: Icon(Icons.folder, size: 24.0), // Custom closed folder icon
+                          icon: Icon(Icons.add, size: 24.0),
+                        ),
+                        Flexible(
+                          child: InkWell(
+                            onTap: () => handleOnTap(entry, entry.isExpanded),
+                            child: Padding(
+                              padding: EdgeInsets.all(8.0),
+                              child: Text(
+                                entry.node.location.name,
+                                style: TextStyle(
+                                  color: isSelected ? Colors.blue : Colors.black, // Change text color if selected
+                                ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                );
-              },
+                      ],
+                    ),
+                  );
+                },
+              ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
+          ],
+        ),
+      );
+    },
+  );
+}
+
+
 }

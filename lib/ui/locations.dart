@@ -78,49 +78,61 @@ class _LocationsWidgetState extends State<LocationsWidget> {
   // void refreshLocationTree() async {
   //   locationTreeViewKey.currentState?.refreshTree();
   // }
+@override
+Widget build(BuildContext context) {
+  return Scaffold(
+    appBar: AppBar(
+      title: const Text("Locations"),
+    ),
+    body: Column(
+      children: [
+        Expanded(
+          child: LocationTreeView(
+            onLocationSelected: onLocationSelected,
+          ),
+        ),
+        Container(
+          color: Colors.grey[200], // Optional: for better visibility
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: _parentIdController,
+                    decoration: const InputDecoration(
+                      labelText: 'Parent Location',
+                      contentPadding: EdgeInsets.symmetric(horizontal: 8.0),
+                    ),
+                  ),
+                  TextField(
+                    controller: _nameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Location Name',
+                      contentPadding: EdgeInsets.symmetric(horizontal: 8.0),
+                    ),
+                  ),
+                  TextField(
+                    controller: _descriptionController,
+                    decoration: const InputDecoration(
+                      labelText: 'Description',
+                      contentPadding: EdgeInsets.symmetric(horizontal: 8.0),
+                    ),
+                  ),
+                  ElevatedButton(
+                    onPressed: _addLocation,
+                    child: const Text('Add Location'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Locations"),
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: LocationTreeView(
-              // key: locationTreeViewKey,
-              // refreshTree: refreshLocationTree,
-              onLocationSelected: onLocationSelected, // Pass the callback here
-            ),
-          ),
-          TextField(
-            controller: _parentIdController,
-            decoration: const InputDecoration(
-              labelText: 'Parent Location',
-              contentPadding: EdgeInsets.symmetric(horizontal: 8.0),
-            ),
-          ),
-          TextField(
-            controller: _nameController,
-            decoration: const InputDecoration(
-              labelText: 'Location Name',
-              contentPadding: EdgeInsets.symmetric(horizontal: 8.0),
-            ),
-          ),
-          TextField(
-            controller: _descriptionController,
-            decoration: const InputDecoration(
-              labelText: 'Description',
-              contentPadding: EdgeInsets.symmetric(horizontal: 8.0),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: _addLocation,
-            child: const Text('Add Location'),
-          ),
-        ],
-      ),
-    );
-  }
+
 }

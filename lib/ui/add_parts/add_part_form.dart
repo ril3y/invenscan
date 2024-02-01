@@ -130,104 +130,7 @@ class _AddPartFormState extends State<AddPartForm> {
           );
   }
 
-  @override
-Widget build(BuildContext context) {
-  return Scaffold(
-    appBar: AppBar(
-      title: const Text('Add New Part'),
-    ),
-    body: SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          // Text Field for Part Name
-          TextField(
-            controller: _partNameController,
-            decoration: const InputDecoration(labelText: 'Part Name'),
-          ),
-
-          // Text Field for Part Number with QR Code Scanner
-          TextField(
-            controller: _partNumberController,
-            decoration: InputDecoration(
-              labelText: 'Part Number',
-              suffixIcon: IconButton(
-                icon: const Icon(Icons.qr_code_scanner),
-                onPressed: _scanPartNumber,
-              ),
-            ),
-          ),
-
-          // Text Field for Supplier
-          TextField(
-            controller: _supplierController,
-            decoration: const InputDecoration(labelText: 'Supplier'),
-          ),
-
-          // Text Field for Quantity
-          TextField(
-            controller: _quantityController,
-            decoration: const InputDecoration(labelText: 'Quantity'),
-            keyboardType: TextInputType.number,
-            inputFormatters: [
-              FilteringTextInputFormatter.digitsOnly,
-            ],
-          ),
-
-          // Text Field for Description
-          TextField(
-            controller: _descriptionController,
-            decoration: const InputDecoration(labelText: 'Description'),
-          ),
-
-         SizedBox(
-            height: 300, // Set a fixed height
-            child: LocationTreeView(
-              onLocationSelected: _onLocationSelected,
-              // refreshTree: _refreshLocationTree,
-            ),
-          ),
-
-          const SizedBox(height: 20),
-
-          // Button to Submit Form
-          ElevatedButton(
-            onPressed: _submitForm,
-            child: const Text('Add Part'),
-          ),
-
-          // Button to Capture Image
-          ElevatedButton(
-            onPressed: _navigateAndCaptureImage,
-            child: const Text('Take Picture'),
-          ),
-
-          // Image Preview with Delete Option
-          if (_imagePath != null)
-            Stack(
-              alignment: Alignment.topRight,
-              children: [
-                SizedBox(
-                  width: MediaQuery.of(context).size.width,
-                  height: MediaQuery.of(context).size.width,
-                  child: Image.file(File(_imagePath!), fit: BoxFit.cover),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.red),
-                  onPressed: () {
-                    setState(() {
-                      _imagePath = null;
-                    });
-                  },
-                ),
-              ],
-            ),
-        ],
-      ),
-    ),
-  );
-}
+   
 
 
   Future<void> _submitForm() async {
@@ -263,4 +166,80 @@ Widget build(BuildContext context) {
       print('Unexpected error submitting part: $genericException');
     }
   }
+
+@override
+Widget build(BuildContext context) {
+  return Scaffold(
+    appBar: AppBar(
+      title: const Text('Add New Part'),
+    ),
+    body: SingleChildScrollView( // Ensures entire form is scrollable
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          TextField(
+            controller: _partNameController,
+            decoration: const InputDecoration(labelText: 'Part Name'),
+          ),
+          TextField(
+            controller: _partNumberController,
+            decoration: InputDecoration(
+              labelText: 'Part Number',
+              suffixIcon: IconButton(
+                icon: const Icon(Icons.qr_code_scanner),
+                onPressed: _scanPartNumber,
+              ),
+            ),
+          ),
+          TextField(
+            controller: _supplierController,
+            decoration: const InputDecoration(labelText: 'Supplier'),
+          ),
+          TextField(
+            controller: _quantityController,
+            decoration: const InputDecoration(labelText: 'Quantity'),
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          ),
+          TextField(
+            controller: _descriptionController,
+            decoration: const InputDecoration(labelText: 'Description'),
+          ),
+          ExpansionTile(
+            title: const Text('Select Location'),
+            children: [
+              SizedBox(
+                height: 200, // Adjust size as needed
+                child: LocationTreeView(
+                  onLocationSelected: _onLocationSelected,
+                ),
+              ),
+            ],
+          ),
+          if (_imagePath != null)
+            Stack(
+              alignment: Alignment.topRight,
+              children: [
+                Image.file(File(_imagePath!), fit: BoxFit.cover),
+                IconButton(
+                  icon: const Icon(Icons.delete, color: Colors.red),
+                  onPressed: () => setState(() => _imagePath = null),
+                ),
+              ],
+            ),
+          ElevatedButton(
+            onPressed: _submitForm,
+            child: const Text('Add Part'),
+          ),
+          ElevatedButton(
+            onPressed: _navigateAndCaptureImage,
+            child: const Text('Take Picture'),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
 }

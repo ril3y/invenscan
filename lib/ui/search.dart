@@ -1,10 +1,8 @@
 // In search.dart
 // ignore_for_file: prefer_const_constructors
 
+import 'package:basic_websocket/utils/api/server_api.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class SearchScreen extends StatefulWidget {
@@ -19,71 +17,29 @@ class _SearchScreenState extends State<SearchScreen> {
   String serverUrl = '';
   List<Map<String, dynamic>> searchResults = [];
   String _searchQuery = ''; // Store the current search query
+  String selectedSearchType = 'name'; // default search type
 
   @override
   void initState() {
     super.initState();
-    _loadServerDetails();
   }
 
-  Future<Map<String, dynamic>?> fetchFullPartData(String partNumber) async {
-    var url = Uri.parse('$serverUrl/get_part/$partNumber');
-    var response = await http.get(url);
-
-    if (response.statusCode == 200) {
-      return json.decode(response.body);
-    } else {
-      // Handle the error
-      print('Failed to fetch full part data');
-      return null;
-    }
-  }
-
-  Future<void> performSearch(String query) async {
-    var url = Uri.parse('$serverUrl/search/$query');
-    var response = await http.get(url);
-
-    if (response.statusCode == 200) {
-      var data = json.decode(response.body);
+  Future<void> performSearch(String query, String searchType) async {
+    if (query.trim().isEmpty) {
+      // If the query is empty, reset the search results and suggestions and do not perform the search
       setState(() {
-        Future<void> performSearch(String query) async {
-          var url = Uri.parse('$serverUrl/search/$query');
-          var response = await http.get(url);
-
-          if (response.statusCode == 200) {
-            var data = json.decode(response.body);
-            setState(() {
-              searchResults = data['search_results'];
-              suggestions = data['suggestions'];
-            });
-          } else {
-            // Handle the error
-            print('Failed to load search results');
-          }
-        }
-
-        searchResults = (data['search_results'] as List<dynamic>)
-            .map((result) => result as Map<String, dynamic>)
-            .toList();
-
-        suggestions = data['suggestions'];
+        searchResults = [];
+        suggestions = [];
       });
-    } else {
-      // Handle the error
-      print('Failed to load search results');
+      return;
     }
-  }
 
-  Future<void> _loadServerDetails() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? serverAddress = prefs.getString('selected_server_address');
-    String? serverPort = prefs.getString('selected_server_port');
-
-    if (serverAddress != null && serverPort != null) {
-      setState(() {
-        serverUrl = 'http://$serverAddress:$serverPort';
-      });
-    }
+    // Continue with the search if the query is not empty
+    var searchResult = await ServerApi.performSearch(query, searchType);
+    setState(() {
+      searchResults = searchResult['searchResults'];
+      suggestions = searchResult['suggestions'];
+    });
   }
 
   Future<void> _showPartDataDialog(Map<String, dynamic> partData) async {
@@ -147,106 +103,121 @@ class _SearchScreenState extends State<SearchScreen> {
     return propertyWidgets;
   }
 
+  Widget buildLocationTree(Map<String, dynamic> locationNode) {
+    if (locationNode.isEmpty) {
+      return SizedBox(); // or some placeholder widget
+    }
+
+    // Extract current location and parent node
+    var currentLocation = locationNode['location'];
+    var parent = locationNode['parent'];
+
+    // Create a widget for the current location
+    var currentWidget = ListTile(
+      title: Text(currentLocation['name']),
+      subtitle: Text(currentLocation['description']),
+    );
+
+    // Recursively build parent nodes
+    var parentWidget = buildLocationTree(parent);
+
+    return Column(
+      children: [
+        currentWidget,
+        parentWidget, // This will be a recursive structure
+      ],
+    );
+  }
+
+  
+
+  AlertDialog buildPartDetailsDialog(
+      Map<String, dynamic> partData, BuildContext context) {
+    Map<String, dynamic> additionalProperties =
+        partData['additional_properties'] ?? {};
+    String imageUrl = partData['image_url'] ?? '';
+    // String locationId =
+    //     partData['location']['id'];
+
+    return AlertDialog(
+      title: Text('Part Details'),
+      
+      content: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            imageUrl.isNotEmpty
+                ? Image.network(imageUrl, height: 100, width: 100)
+                : SizedBox(),
+            SizedBox(height: imageUrl.isNotEmpty ? 16 : 0),
+            buildDetailText('Part Number:', partData['part_number']),
+            buildDetailText('Description:', partData['description']),
+            SizedBox(height: 8),
+            Text('Additional Properties:',
+                style: TextStyle(fontWeight: FontWeight.bold)),
+            ...additionalProperties.entries
+                .map((entry) => buildRichText(entry)),
+            SizedBox(height: 8),
+            Text('Location Path:',
+                style: TextStyle(fontWeight: FontWeight.bold)),
+                //TODO: Add location tree view 
+            // FutureBuilder<List<Location>>(
+            //   future: ServerApi.getLocationPath(locationId),
+            //   builder: (context, snapshot) {
+            //     if (snapshot.connectionState == ConnectionState.waiting) {
+            //       return CircularProgressIndicator();
+            //     } else if (snapshot.hasError) {
+            //       return Text("Error loading location path");
+            //     } else if (snapshot.hasData) {
+            //       return Column(
+            //         children: snapshot.data!
+            //             .map((location) => Text(location!.name))
+            //             .toList(),
+            //       );
+            //     } else {
+            //       return Text("No location data available");
+            //     }
+            //   },
+            // ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+            onPressed: () => Navigator.of(context).pop(), child: Text('Close'))
+      ],
+    );
+  }
+
+  Widget buildDetailText(String title, String? value) {
+    return Padding(
+      padding: EdgeInsets.only(top: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: TextStyle(fontWeight: FontWeight.bold)),
+          Text(value ?? '', style: TextStyle(fontStyle: FontStyle.italic)),
+        ],
+      ),
+    );
+  }
+
+  Widget buildRichText(MapEntry<String, dynamic> entry) {
+    bool isUrl = Uri.tryParse(entry.value)?.hasAbsolutePath ?? false;
+    return isUrl
+        ? InkWell(
+            onTap: () => launch(entry.value),
+            child: Text('${entry.key}: ${entry.value}',
+                style: TextStyle(color: Colors.blue)))
+        : Text('${entry.key}: ${entry.value}');
+  }
+
   Future<void> _showPartDetailsDialog(Map<String, dynamic> partData) async {
-    await showDialog(
+    showDialog(
       context: context,
       builder: (BuildContext context) {
-        // Extract additional properties if available
-        Map<String, dynamic> additionalProperties =
-            partData.containsKey('additional_properties')
-                ? partData['additional_properties']
-                : {};
-
-        return AlertDialog(
-          title: Text('Part Details'),
-          content: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                if (partData.containsKey('image_url') &&
-                    partData['image_url'].isNotEmpty)
-                  Image.network(
-                    partData['image_url'],
-                    height: 100, // Adjust the height as needed
-                    width: 100, // Adjust the width as needed
-                  ),
-                SizedBox(height: 16), // Add some spacing
-                Text(
-                  'Part Number:',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                Text(
-                  partData['part_number'],
-                  style: TextStyle(fontStyle: FontStyle.italic),
-                ),
-                SizedBox(height: 8), // Add some spacing
-                Text(
-                  'Description:',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                Text(
-                  partData['description'],
-                  style: TextStyle(fontStyle: FontStyle.italic),
-                ),
-                SizedBox(height: 8), // Add spacing before additional properties
-                Text(
-  'Additional Properties:',
-  style: TextStyle(fontWeight: FontWeight.bold),
-),
-...additionalProperties.entries.map((entry) {
-  // Check if the value is a URL
-  bool isUrl = Uri.tryParse(entry.value)?.hasAbsolutePath ?? false;
-
-  return isUrl
-      ? InkWell(
-          onTap: () {
-            // Launch the URL
-            launch(entry.value);
-          },
-          child: RichText(
-            text: TextSpan(
-              children: [
-                TextSpan(
-                  text: '${entry.key}: ',
-                  style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
-                ),
-                TextSpan(
-                  text: entry.value,
-                  style: TextStyle(fontStyle: FontStyle.italic, color: Colors.blue),
-                ),
-              ],
-            ),
-          ),
-        )
-      : RichText(
-          text: TextSpan(
-            children: [
-              TextSpan(
-                text: '${entry.key}: ',
-                style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
-              ),
-              TextSpan(
-                text: entry.value,
-                style: TextStyle(fontStyle: FontStyle.italic, color: Colors.black),
-              ),
-            ],
-          ),
-        );
-}),
-
-              ],
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text('Close'),
-            ),
-          ],
-        );
+        return buildPartDetailsDialog(partData, context);
       },
     );
   }
@@ -266,68 +237,86 @@ class _SearchScreenState extends State<SearchScreen> {
           children: <Widget>[
             Padding(
               padding: const EdgeInsets.all(8.0),
-              child: Text(
-                'Search for a part',
-                style: Theme.of(context).textTheme.titleLarge,
+              child: DropdownButton<String>(
+                value: selectedSearchType,
+                items: <String>['name', 'number']
+                    .map<DropdownMenuItem<String>>((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
+                onChanged: (String? newValue) {
+                  setState(() {
+                    selectedSearchType = newValue!;
+                  });
+                },
               ),
             ),
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: TextField(
                 decoration: const InputDecoration(
-                  labelText: 'Enter part number',
+                  labelText: 'Enter query',
                   border: OutlineInputBorder(),
                 ),
                 onChanged: (String value) {
                   setState(() {
-                    _searchQuery = value; // Update the search query
+                    _searchQuery = value;
                   });
-                  performSearch(value); // Trigger search as you type
+                  performSearch(_searchQuery, selectedSearchType);
                 },
               ),
             ),
-            // Display suggestions as you type
-            ListView.builder(
-              shrinkWrap: true,
-              itemCount: suggestions.length,
-              itemBuilder: (context, index) {
-                final suggestion = suggestions[index];
-                return ListTile(
-                  title: Text(suggestion),
-                  onTap: () async {
-                    setState(() {
-                      _searchQuery =
-                          suggestion; // Set the search query to the suggestion
-                    });
-                    // Fetch the full part data from the server
-                    final fullPartData = await fetchFullPartData(suggestion);
-                    if (fullPartData != null) {
-                      // Show the part details dialog with the full part data
-                      _showPartDetailsDialog(fullPartData);
-                    }
-                  },
-                );
-              },
-            ),
-            // Display search results
-            ListView.builder(
-              shrinkWrap: true,
-              itemCount: searchResults.length,
-              itemBuilder: (context, index) {
-                return ListTile(
-                  title: Text(searchResults[index]['part_number']),
-                  subtitle: Text(searchResults[index]['description']),
-                  // Add more details as needed
-                );
-              },
-            ),
+
+            // UI for displaying suggestions
+            if (suggestions.isNotEmpty)
+              ListView.builder(
+                shrinkWrap: true,
+                physics: NeverScrollableScrollPhysics(),
+                itemCount: suggestions.length,
+                itemBuilder: (context, index) {
+                  return ListTile(
+                    title: Text(suggestions[index]),
+                    onTap: () {
+                      // Set the search query to the selected suggestion and perform search
+                      setState(() {
+                        _searchQuery = suggestions[index];
+                      });
+                      performSearch(_searchQuery, selectedSearchType);
+                    },
+                  );
+                },
+              ),
+
+            // UI for displaying search results
+            if (searchResults.isNotEmpty)
+              ListView.builder(
+                shrinkWrap: true,
+                physics: NeverScrollableScrollPhysics(),
+                itemCount: searchResults.length,
+                itemBuilder: (context, index) {
+                  var result = searchResults[index];
+                  String displayText = selectedSearchType == 'name'
+                      ? result['name'] ?? ''
+                      : result['part_number'] ?? '';
+
+                  return ListTile(
+                    title: Text(displayText),
+                    subtitle: Text(result['description'] ?? 'No Description'),
+                    onTap: () async {
+                      // Fetch and show part details
+                      await _showPartDetailsDialog(result);
+                    },
+                  );
+                },
+              ),
           ],
         ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // Submit the search with the current query
-          performSearch(_searchQuery);
+          performSearch(_searchQuery, selectedSearchType);
         },
         child: Icon(Icons.search),
       ),

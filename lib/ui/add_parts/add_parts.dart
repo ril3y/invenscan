@@ -12,7 +12,6 @@ import 'package:basic_websocket/utils/nfc_manager.dart';
 import 'package:basic_websocket/ui/status_bar.dart';
 import 'package:basic_websocket/ui/add_parts/add_part_form.dart';
 
-
 class AddParts extends StatefulWidget {
   final WebSocketManager webSocketManager;
 
@@ -76,7 +75,7 @@ class _AddPartsState extends State<AddParts> {
     print("Part Added : $data");
     var decodedData = jsonDecode(data);
 
-    setState(() { 
+    setState(() {
       parts.add(PartData.fromJson(
           decodedData['data'])); // Add the new part to the list
     });
@@ -105,7 +104,7 @@ class _AddPartsState extends State<AddParts> {
         ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('NFC Tag Writing Skipped.')));
       }
-        } else {
+    } else {
       // Handle case where jsonData does not contain the expected event
       print("Error: Unexpected jsonData structure or event type.");
     }
@@ -198,28 +197,31 @@ class _AddPartsState extends State<AddParts> {
     );
   }
 
-  void handleOnRequiredInput(dynamic data) async {
-    var decodedData = jsonDecode(data);
+ void handleOnRequiredInput(dynamic data) async {
+  var decodedData = jsonDecode(data);
 
-    if (decodedData.containsKey('required_inputs')) {
-      // Handle required inputs
-      showInputQuestionDialog(decodedData);
-    } else if (decodedData.containsKey('event') &&
-        decodedData['event'] == "question") {
-      // Handle question event
+  if (decodedData.containsKey('required_inputs')) {
+    // Handle required inputs
+    if (!mounted) return;
+    showInputQuestionDialog(decodedData);
+  } else if (decodedData.containsKey('event') &&
+      decodedData['event'] == "question") {
+    // Early return if the widget is not in the tree
+    if (!mounted) return;
 
-      bool? userResponse = await showQuestionDialog(data);
-      // Check if the widget is still mounted after awaiting the dialog response
-      if (!mounted) return;
+    bool? userResponse = await showQuestionDialog(data);
+    // Re-check if the widget is still mounted after awaiting
+    if (!mounted) return;
 
-      // Check if a response was received
-      if (userResponse != null) {
-        // Check the value of userResponse and send the corresponding message
-        String response = userResponse ? "yes" : "no";
-        widget.webSocketManager.send(response);
-      }
+    // Check if a response was received
+    if (userResponse != null) {
+      // Check the value of userResponse and send the corresponding message
+      String response = userResponse ? "yes" : "no";
+      widget.webSocketManager.send(response);
     }
   }
+}
+
 
   void _editPart(int index) {
     Navigator.push(
@@ -268,19 +270,17 @@ class _AddPartsState extends State<AddParts> {
     );
   }
 
+  void _navigateToAddPartForm() async {
+    final response = await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const AddPartForm()),
+    );
 
-void _navigateToAddPartForm() async {
-  final response = await Navigator.of(context).push(
-    MaterialPageRoute(builder: (_) => const AddPartForm()),
-  );
-
-  if (response != null) {
-    // Handle the response here
-  handleOnPartAdded(response);
-    print("Response from AddPartForm: $response");
+    if (response != null) {
+      // Handle the response here
+      handleOnPartAdded(response);
+      print("Response from AddPartForm: $response");
+    }
   }
-}
-
 
   Widget _buildFloatingActionButtons() {
     return Padding(
