@@ -1,10 +1,5 @@
-<<<<<<< HEAD
 name: invenscan
-description: "A new Flutter project."
-=======
-name: basic_websocket
-description: A new Flutter project.
->>>>>>> 7ec393b37ce2c1e0d82742684585db5e255a7133
+description: "An makers inventory tracking and entry system."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -24,11 +19,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+1
 
 environment:
-<<<<<<< HEAD
   sdk: '>=3.3.0 <4.0.0'
-=======
-  sdk: '>=3.1.5 <4.0.0'
->>>>>>> 7ec393b37ce2c1e0d82742684585db5e255a7133
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -52,23 +43,11 @@ dependencies:
   url_launcher: ^6.0.9
   provider: ^6.0.0
   camera: 0.10.5+9
-<<<<<<< HEAD
-  # google_ml_kit: ^0.16.3
-  image_picker: ^1.0.7
-  # google_mlkit_text_recognition: ^0.11.0
-  animated_tree_view: ^2.2.0
-  flutter_fancy_tree_view: ^1.4.1
-  vibration: ^1.8.4
-
-
-  collection: any
-=======
   google_ml_kit: ^0.16.3
   image_picker: ^1.0.7
   google_mlkit_text_recognition: ^0.11.0
   animated_tree_view: ^2.2.0
   flutter_fancy_tree_view: ^1.4.1
->>>>>>> 7ec393b37ce2c1e0d82742684585db5e255a7133
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -78,11 +57,7 @@ dev_dependencies:
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
-<<<<<<< HEAD
-  flutter_lints: ^3.0.0
-=======
   flutter_lints: ^3.0.1
->>>>>>> 7ec393b37ce2c1e0d82742684585db5e255a7133
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
