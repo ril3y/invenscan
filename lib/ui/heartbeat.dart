@@ -12,8 +12,12 @@ class HeartbeatIcon extends StatefulWidget {
   _HeartbeatIconState createState() => _HeartbeatIconState();
 }
 
+<<<<<<< HEAD
 class _HeartbeatIconState extends State<HeartbeatIcon>
     with SingleTickerProviderStateMixin {
+=======
+class _HeartbeatIconState extends State<HeartbeatIcon> with SingleTickerProviderStateMixin {
+>>>>>>> 7ec393b37ce2c1e0d82742684585db5e255a7133
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
   late Animation<Color?> _colorAnimation;
@@ -37,6 +41,7 @@ class _HeartbeatIconState extends State<HeartbeatIcon>
   void initState() {
     super.initState();
 
+<<<<<<< HEAD
     widget.webSocketManager
         .addHandler("heartbeat", _onConnectionChangeHandler, "onConnectionChangeHandlers");
     widget.webSocketManager
@@ -45,6 +50,13 @@ class _HeartbeatIconState extends State<HeartbeatIcon>
     _animationController = AnimationController(
       duration:
           const Duration(milliseconds: 600), // Total duration for the pulse
+=======
+    widget.webSocketManager.addOnConnectionChangedHandler(_onConnectionChangeHandler);
+    widget.webSocketManager.addOnHeartbeatHandler(_onHeartBeatHandler);
+    
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 600), // Total duration for the pulse
+>>>>>>> 7ec393b37ce2c1e0d82742684585db5e255a7133
       vsync: this,
     );
 

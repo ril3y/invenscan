@@ -61,10 +61,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _initializeConnectionStatus();
     _loadSavedServers();
     _loadSettings();
+<<<<<<< HEAD
     widget.webSocketManager
         .addHandler("settings", _onWebSocketError, "onErrorHandlers");
     widget.webSocketManager.addHandler(
         "settings", _onConnectionChanged, "onConnectionChangedHandlers");
+=======
+    widget.webSocketManager.addOnError(_onWebSocketError);
+    widget.webSocketManager.addOnConnectionChangedHandler(_onConnectionChanged);
+>>>>>>> 7ec393b37ce2c1e0d82742684585db5e255a7133
   }
 // ================================================ initState() =========================================================
 
@@ -380,6 +385,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+<<<<<<< HEAD
   void _autoReconnectChanged(bool? value) async {
     if (value != null) {
       SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -399,6 +405,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
       });
     }
   }
+=======
+ void _autoReconnectChanged(bool? value) async {
+  if (value != null) {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('auto_reconnect', value);
+    setState(() {
+      _autoReconnect = value;
+    });
+  }
+}
+
+void _promptNFCChanged(bool? value) async {
+  if (value != null) {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('prompt_nfc', value);
+    setState(() {
+      _promptNFC = value;
+    });
+  }
+}
+>>>>>>> 7ec393b37ce2c1e0d82742684585db5e255a7133
 
   Widget _buildButtonSection() {
     return Wrap(

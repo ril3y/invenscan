@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // ignore_for_file: use_build_context_synchronously, non_constant_identifier_names
 
 import 'dart:convert';
@@ -16,6 +17,21 @@ import 'package:invenscan/utils/nfc_manager.dart';
 import 'package:invenscan/utils/websocket.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
+=======
+import 'dart:convert';
+import 'package:basic_websocket/ui/add_parts/edit_screen.dart';
+import 'package:flutter/material.dart';
+import 'package:uuid/uuid.dart';
+import 'package:basic_websocket/scanner_service.dart';
+import 'package:basic_websocket/part_data.dart';
+import 'package:basic_websocket/utils/websocket.dart';
+import 'package:basic_websocket/input_dialog.dart';
+import 'package:basic_websocket/ui/question_dialog.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:basic_websocket/utils/nfc_manager.dart';
+import 'package:basic_websocket/ui/status_bar.dart';
+import 'package:basic_websocket/ui/add_parts/add_part_form.dart';
+>>>>>>> 7ec393b37ce2c1e0d82742684585db5e255a7133
 
 class AddParts extends StatefulWidget {
   final WebSocketManager webSocketManager;
@@ -34,10 +50,13 @@ class _AddPartsState extends State<AddParts> {
   bool isWritingToNfc = false;
   late String serverUrl;
 
+<<<<<<< HEAD
   // Add these fields
   bool _qrButtonEnabled = false;
   bool _addButtonEnabled = false;
 
+=======
+>>>>>>> 7ec393b37ce2c1e0d82742684585db5e255a7133
   void showNfcWaitingDialog() {
     showDialog(
       context: context,
@@ -57,6 +76,7 @@ class _AddPartsState extends State<AddParts> {
             TextButton(
               onPressed: () {
                 // Cancel the NFC write operation
+<<<<<<< HEAD
                 if (mounted) {
                   // Check if the widget is still in the widget tree
                   setState(() {
@@ -67,12 +87,22 @@ class _AddPartsState extends State<AddParts> {
               },
               child: const Text('Cancel'),
             )
+=======
+                setState(() {
+                  isWritingToNfc = false;
+                });
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: const Text('Cancel'),
+            ),
+>>>>>>> 7ec393b37ce2c1e0d82742684585db5e255a7133
           ],
         );
       },
     );
   }
 
+<<<<<<< HEAD
   //   'onErrorHandlers': onErrorHandlers,
   // 'onConnectionChangedHandlers': onConnectionChangedHandlers,
   // 'onReceiveHandlers': onReceiveHandlers,
@@ -114,11 +144,20 @@ class _AddPartsState extends State<AddParts> {
     //     .removeHandler("add_parts", "onUserInputRequiredHandlers");
     // widget.webSocketManager.removeHandler("add_parts", "onPartAddedHandlers");
     super.dispose();
+=======
+  @override
+  void initState() {
+    super.initState();
+    widget.webSocketManager.addOnUserInputRequired(handleOnRequiredInput);
+    widget.webSocketManager.addOnPartAddedHandler(handleOnPartAdded);
+    widget.webSocketManager.startConnection();
+>>>>>>> 7ec393b37ce2c1e0d82742684585db5e255a7133
   }
 
   void handleOnReceive(dynamic data) {
     // Process data received from WebSocket
     // Implement your logic here
+<<<<<<< HEAD
     if (kDebugMode) {
       print("Part Added : $data");
     }
@@ -130,6 +169,15 @@ class _AddPartsState extends State<AddParts> {
             decodedData['data'])); // Add the new part to the list
       });
     }
+=======
+    print("Part Added : $data");
+    var decodedData = jsonDecode(data);
+
+    setState(() {
+      parts.add(PartData.fromJson(
+          decodedData['data'])); // Add the new part to the list
+    });
+>>>>>>> 7ec393b37ce2c1e0d82742684585db5e255a7133
   }
 
   void handleOnPartAdded(dynamic jsonData) async {
@@ -138,6 +186,7 @@ class _AddPartsState extends State<AddParts> {
       // Extract the part data
       Map<String, dynamic> partData = jsonData['data'];
 
+<<<<<<< HEAD
       // Perform any asynchronous work before calling setState()
       bool nfcWriteSuccess = await _handleNFCScan(partData);
 
@@ -154,6 +203,24 @@ class _AddPartsState extends State<AddParts> {
             content: Text(nfcWriteSuccess
                 ? 'NFC Tag Written Successfully!'
                 : 'NFC Tag Writing Skipped.')));
+=======
+      // Check if partData is not null and has the expected structure
+      // Add the new part to the list and update UI
+      setState(() {
+        parts.add(PartData.fromJson(partData));
+      });
+
+      // Handle NFC writing if required
+      bool nfcWriteSuccess = await _handleNFCScan(partData);
+      if (nfcWriteSuccess) {
+        // NFC write was successful
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('NFC Tag Written Successfully!')));
+      } else {
+        // NFC write failed or was not performed
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('NFC Tag Writing Skipped.')));
+>>>>>>> 7ec393b37ce2c1e0d82742684585db5e255a7133
       }
     } else {
       // Handle case where jsonData does not contain the expected event
@@ -182,11 +249,17 @@ class _AddPartsState extends State<AddParts> {
 
       widget.webSocketManager.send(json.encode(dataToSend));
     } catch (e) {
+<<<<<<< HEAD
       if (mounted) {
         setState(() {
           _scanResult = 'Error: ${e.toString()}';
         });
       }
+=======
+      setState(() {
+        _scanResult = 'Error: ${e.toString()}';
+      });
+>>>>>>> 7ec393b37ce2c1e0d82742684585db5e255a7133
     }
   }
 
@@ -195,6 +268,7 @@ class _AddPartsState extends State<AddParts> {
     bool promptNFCValue = prefs.getBool('prompt_nfc') ?? false;
 
     if (promptNFCValue) {
+<<<<<<< HEAD
       bool? userResponse;
       // Ensure the widget is still mounted before attempting to show a dialog.
       if (mounted) {
@@ -203,10 +277,16 @@ class _AddPartsState extends State<AddParts> {
       }
 
       // Check if the user agreed to proceed after the dialog.
+=======
+      bool? userResponse = await showQuestionDialog(
+          '{"event": "question", "question_type": "regular", "question_text": "Do you want to write the part number to an NFC tag?", "positive_text": "Yes", "negative_text": "No"}');
+
+>>>>>>> 7ec393b37ce2c1e0d82742684585db5e255a7133
       if (userResponse == true) {
         setState(() {
           isWritingToNfc = true;
         });
+<<<<<<< HEAD
 
         showNfcWaitingDialog(); // Display waiting dialog
 
@@ -223,6 +303,19 @@ class _AddPartsState extends State<AddParts> {
           }
           // Optionally, show an error message or handle the error
           return false; // NFC write failed
+=======
+        showNfcWaitingDialog(); // Display the waiting dialog
+
+        try {
+          await NFCManager.writeToNFC(dataToSend['uuid']);
+          Navigator.of(context)
+              .pop(); // Close the dialog immediately after NFC write
+          return true; // Return true if NFC write was successful
+        } catch (e) {
+          Navigator.of(context).pop(); // Close the dialog in case of an error
+          // Handle the error
+          return false; // Return false if NFC write failed
+>>>>>>> 7ec393b37ce2c1e0d82742684585db5e255a7133
         } finally {
           if (mounted) {
             setState(() {
@@ -230,6 +323,7 @@ class _AddPartsState extends State<AddParts> {
             });
           }
         }
+<<<<<<< HEAD
       } else {
         return false; // User responded negatively or dialog was not shown
       }
@@ -243,6 +337,18 @@ class _AddPartsState extends State<AddParts> {
         parts.clear();
       });
     }
+=======
+      }
+    }
+
+    return false; // Return false by default
+  }
+
+  void _clear_parts() {
+    setState(() {
+      parts.clear();
+    });
+>>>>>>> 7ec393b37ce2c1e0d82742684585db5e255a7133
   }
 
   void showInputQuestionDialog(Map<String, dynamic> decodedData) {
@@ -263,6 +369,7 @@ class _AddPartsState extends State<AddParts> {
     );
   }
 
+<<<<<<< HEAD
   void handleOnRequiredInput(dynamic data) async {
     var decodedData = jsonDecode(data);
     print("handle required input: $decodedData");
@@ -298,6 +405,44 @@ class _AddPartsState extends State<AddParts> {
   // }
 
   void _navigateToEditPartScreen(PartModel part) {
+=======
+ void handleOnRequiredInput(dynamic data) async {
+  var decodedData = jsonDecode(data);
+
+  if (decodedData.containsKey('required_inputs')) {
+    // Handle required inputs
+    if (!mounted) return;
+    showInputQuestionDialog(decodedData);
+  } else if (decodedData.containsKey('event') &&
+      decodedData['event'] == "question") {
+    // Early return if the widget is not in the tree
+    if (!mounted) return;
+
+    bool? userResponse = await showQuestionDialog(data);
+    // Re-check if the widget is still mounted after awaiting
+    if (!mounted) return;
+
+    // Check if a response was received
+    if (userResponse != null) {
+      // Check the value of userResponse and send the corresponding message
+      String response = userResponse ? "yes" : "no";
+      widget.webSocketManager.send(response);
+    }
+  }
+}
+
+
+  void _editPart(int index) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditPartScreen(part: parts[index]),
+      ),
+    );
+  }
+
+  void _navigateToEditPartScreen(PartData part) {
+>>>>>>> 7ec393b37ce2c1e0d82742684585db5e255a7133
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => EditPartScreen(part: part)),
@@ -322,10 +467,17 @@ class _AddPartsState extends State<AddParts> {
                 child: Text(_scanResult,
                     style: Theme.of(context).textTheme.titleSmall),
               ),
+<<<<<<< HEAD
               // DataTable(
               //   columns: PartData.createColumns(),
               //   rows: PartData.createRows(parts, _navigateToEditPartScreen),
               // ),
+=======
+              DataTable(
+                columns: PartData.createColumns(),
+                rows: PartData.createRows(parts, _navigateToEditPartScreen),
+              ),
+>>>>>>> 7ec393b37ce2c1e0d82742684585db5e255a7133
             ],
           ),
         ),
@@ -355,16 +507,24 @@ class _AddPartsState extends State<AddParts> {
         children: <Widget>[
           FloatingActionButton(
             heroTag: 'scanButton',
+<<<<<<< HEAD
             foregroundColor: _addButtonEnabled ? null : Colors.grey,
             onPressed: _qrButtonEnabled ? _initiateScan : null,
+=======
+            onPressed: _initiateScan,
+>>>>>>> 7ec393b37ce2c1e0d82742684585db5e255a7133
             tooltip: 'Scan',
             child: const Icon(Icons.qr_code),
           ),
           const SizedBox(width: 20),
           FloatingActionButton(
             heroTag: 'addManualPartButton',
+<<<<<<< HEAD
             foregroundColor: _addButtonEnabled ? null : Colors.grey,
             onPressed: _addButtonEnabled ? _navigateToAddPartForm : null,
+=======
+            onPressed: _navigateToAddPartForm,
+>>>>>>> 7ec393b37ce2c1e0d82742684585db5e255a7133
             tooltip: 'Add Manual Part',
             child: const Icon(Icons.add),
           ),

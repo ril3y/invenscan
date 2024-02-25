@@ -1,9 +1,16 @@
+<<<<<<< HEAD
 import 'package:invenscan/utils/api/category.dart';
 import 'package:invenscan/utils/api/partmodel.dart';
+=======
+>>>>>>> 7ec393b37ce2c1e0d82742684585db5e255a7133
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'location.dart';
+<<<<<<< HEAD
+=======
+import 'category.dart' as category;
+>>>>>>> 7ec393b37ce2c1e0d82742684585db5e255a7133
 
 class ServerApi {
   static Future<String> _getServerUrl() async {
@@ -11,8 +18,17 @@ class ServerApi {
     String? serverAddress = prefs.getString('selected_server_address');
     String? serverPort = prefs.getString('selected_server_port');
 
+<<<<<<< HEAD
     return 'http://$serverAddress:$serverPort';
     }
+=======
+    if (serverAddress != null && serverPort != null) {
+      return 'http://$serverAddress:$serverPort';
+    } else {
+      throw Exception('Server address and port not set');
+    }
+  }
+>>>>>>> 7ec393b37ce2c1e0d82742684585db5e255a7133
 
   static Future<Map<String, dynamic>> addPart(
       Map<String, dynamic> partData) async {
@@ -151,6 +167,7 @@ class ServerApi {
     }
   }
 
+<<<<<<< HEAD
   static Future<List<PartModel>> getParts(int page, int pageSize) async {
     String baseUrl =
         await _getServerUrl(); // Assuming _getServerUrl() is implemented elsewhere
@@ -167,6 +184,8 @@ class ServerApi {
     }
   }
 
+=======
+>>>>>>> 7ec393b37ce2c1e0d82742684585db5e255a7133
   static Future<http.Response> deleteLocation(String locationId) async {
     String baseUrl = await _getServerUrl();
     var url = Uri.parse('$baseUrl/delete_location/$locationId');
@@ -183,6 +202,7 @@ class ServerApi {
     // any response data here if your API provides it.
   }
 
+<<<<<<< HEAD
   static Future<http.Response> deletePart(String partId) async {
     String baseUrl = await _getServerUrl();
     var url = Uri.parse('$baseUrl/delete_part/$partId');
@@ -199,6 +219,8 @@ class ServerApi {
     // any response data here if your API provides it.
   }
 
+=======
+>>>>>>> 7ec393b37ce2c1e0d82742684585db5e255a7133
   static Future<Map<String, dynamic>> previewDeleteLocation(
       String locationId) async {
     String baseUrl = await _getServerUrl();
@@ -234,17 +256,30 @@ class ServerApi {
     }
   }
 
+<<<<<<< HEAD
   static Future<List<Category>> fetchCategories() async {
     String baseUrl = await _getServerUrl();
     var url = Uri.parse(
         '$baseUrl/all_categories/'); // Adjust the endpoint as necessary
+=======
+  static Future<List<category.Category>> fetchCategories() async {
+    String baseUrl = await _getServerUrl();
+    var url = Uri.parse(
+        '$baseUrl/get_all_categories/'); // Adjust the endpoint as necessary
+>>>>>>> 7ec393b37ce2c1e0d82742684585db5e255a7133
     var response = await http.get(url);
 
     if (response.statusCode == 200) {
       var responseBody = jsonDecode(response.body);
+<<<<<<< HEAD
       List<Category> allCategories = (responseBody['categories']
               as List) // Ensure the key matches your JSON structure
           .map((categoryJson) => Category.fromJson(categoryJson))
+=======
+      List<category.Category> allCategories = (responseBody['categories']
+              as List) // Ensure the key matches your JSON structure
+          .map((categoryJson) => category.Category.fromJson(categoryJson))
+>>>>>>> 7ec393b37ce2c1e0d82742684585db5e255a7133
           .toList();
 
       return allCategories;
@@ -252,6 +287,7 @@ class ServerApi {
       throw Exception('Failed to load categories');
     }
   }
+<<<<<<< HEAD
 
   static Future<Map<String, dynamic>> updatePart(PartModel partData) async {
     var jsonPart = partData.toJson();
@@ -273,4 +309,6 @@ class ServerApi {
           'Failed to add part. Status code: ${response.statusCode}');
     }
   }
+=======
+>>>>>>> 7ec393b37ce2c1e0d82742684585db5e255a7133
 }

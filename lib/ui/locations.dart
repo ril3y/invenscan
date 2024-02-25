@@ -1,9 +1,16 @@
 // ignore_for_file: library_private_types_in_public_api, use_key_in_widget_constructors, use_build_context_synchronously, prefer_const_constructors
 
+<<<<<<< HEAD
 import 'package:flutter/material.dart';
 import 'package:invenscan/ui/location_tree_view.dart';
 import 'package:invenscan/utils/api/location.dart';
 import 'package:invenscan/utils/api/server_api.dart';
+=======
+import 'package:basic_websocket/ui/location_tree_view.dart';
+import 'package:flutter/material.dart';
+import 'package:basic_websocket/utils/api/location.dart';
+import 'package:basic_websocket/utils/api/server_api.dart';
+>>>>>>> 7ec393b37ce2c1e0d82742684585db5e255a7133
 
 class LocationsWidget extends StatefulWidget {
   @override

@@ -1,5 +1,6 @@
 import 'dart:io';
 
+<<<<<<< HEAD
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:invenscan/scanner_service.dart';
@@ -9,6 +10,17 @@ import 'package:invenscan/utils/api/partmodel.dart';
 import 'package:invenscan/utils/api/server_api.dart';
 import 'package:invenscan/utils/api/server_api_exception.dart';
 import 'package:invenscan/utils/camera_capture.dart';
+=======
+import 'package:basic_websocket/scanner_service.dart';
+import 'package:basic_websocket/utils/api/server_api_exception.dart';
+import 'package:flutter/material.dart';
+import 'package:basic_websocket/utils/api/server_api.dart';
+import 'package:basic_websocket/utils/api/location.dart';
+import 'package:basic_websocket/utils/camera_capture.dart';
+import 'package:flutter/services.dart';
+import 'package:basic_websocket/utils/api/partmodel.dart';
+import 'package:basic_websocket/ui/location_tree_view.dart';
+>>>>>>> 7ec393b37ce2c1e0d82742684585db5e255a7133
 
 class AddPartForm extends StatefulWidget {
   const AddPartForm({super.key});
@@ -130,6 +142,12 @@ class _AddPartFormState extends State<AddPartForm> {
           );
   }
 
+<<<<<<< HEAD
+=======
+   
+
+
+>>>>>>> 7ec393b37ce2c1e0d82742684585db5e255a7133
   Future<void> _submitForm() async {
     try {
       PartModel partData = PartModel(
@@ -164,6 +182,7 @@ class _AddPartFormState extends State<AddPartForm> {
     }
   }
 
+<<<<<<< HEAD
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -239,4 +258,81 @@ class _AddPartFormState extends State<AddPartForm> {
       ),
     );
   }
+=======
+@override
+Widget build(BuildContext context) {
+  return Scaffold(
+    appBar: AppBar(
+      title: const Text('Add New Part'),
+    ),
+    body: SingleChildScrollView( // Ensures entire form is scrollable
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          TextField(
+            controller: _partNameController,
+            decoration: const InputDecoration(labelText: 'Part Name'),
+          ),
+          TextField(
+            controller: _partNumberController,
+            decoration: InputDecoration(
+              labelText: 'Part Number',
+              suffixIcon: IconButton(
+                icon: const Icon(Icons.qr_code_scanner),
+                onPressed: _scanPartNumber,
+              ),
+            ),
+          ),
+          TextField(
+            controller: _supplierController,
+            decoration: const InputDecoration(labelText: 'Supplier'),
+          ),
+          TextField(
+            controller: _quantityController,
+            decoration: const InputDecoration(labelText: 'Quantity'),
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          ),
+          TextField(
+            controller: _descriptionController,
+            decoration: const InputDecoration(labelText: 'Description'),
+          ),
+          ExpansionTile(
+            title: const Text('Select Location'),
+            children: [
+              SizedBox(
+                height: 200, // Adjust size as needed
+                child: LocationTreeView(
+                  onLocationSelected: _onLocationSelected,
+                ),
+              ),
+            ],
+          ),
+          if (_imagePath != null)
+            Stack(
+              alignment: Alignment.topRight,
+              children: [
+                Image.file(File(_imagePath!), fit: BoxFit.cover),
+                IconButton(
+                  icon: const Icon(Icons.delete, color: Colors.red),
+                  onPressed: () => setState(() => _imagePath = null),
+                ),
+              ],
+            ),
+          ElevatedButton(
+            onPressed: _submitForm,
+            child: const Text('Add Part'),
+          ),
+          ElevatedButton(
+            onPressed: _navigateAndCaptureImage,
+            child: const Text('Take Picture'),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+>>>>>>> 7ec393b37ce2c1e0d82742684585db5e255a7133
 }
