@@ -1,0 +1,170 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.buildlog/
+.history
+.svn/
+migrate_working_dir/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# The .vscode folder contains launch configuration and tasks you configure in
+# VS Code which you may wish to be included in version control, so this line
+# is commented out by default.
+#.vscode/
+
+# Flutter/Dart/Pub related
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/build/
+
+# Symbolication related
+app.*.symbols
+
+# Obfuscation related
+app.*.map.json
+
+# Android Studio will place build artifacts here
+/android/app/debug
+/android/app/profile
+/android/app/release
+
+
+# General
+.DS_Store
+.idea/
+*.iml
+*.log
+*.pid
+*.pid.lock
+*.seed
+*.swo
+*.swp
+*.lock
+*.zip
+*.tar.gz
+*.rar
+*.tar
+*.tgz
+docs/api/
+
+# Dart tooling & build outputs
+.dart_tool/
+.buildlog
+.packages
+.pub/
+.pub-cache/
+build/
+# If you're using Flutter plugins, you might want to consider committing the .flutter-plugins-dependencies file to source control to ensure
+# consistent plugin versions across all environments. Remove the line below if you wish to track this file.
+.flutter-plugins-dependencies
+
+# IntelliJ related
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# The .vscode folder contains launch configuration and workspace settings specific to each developer's environment,
+# and should not typically be committed to version control.
+.vscode/
+
+# Flutter/Dart/Pub related
+**/flutter_export_environment.sh
+**/.last_build_id
+**/.dart_tool/
+**/flutter_gen/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+
+# OS generated files
+.DS_Store*
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Files and directories created by pub
+.packages
+.pub/
+.pub-cache/
+build/
+# If you're using Flutter plugins, consider committing the .flutter-plugins-dependencies file to source control to ensure
+# consistent plugin versions across all environments. Remove the line below if you wish to track this file.
+#.flutter-plugins-dependencies
+
+# Files and directories created by flutter tools
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# Files and directories created by the Flutter build system
+/build/
+ios/Flutter/.last_build_id
+ios/Flutter/App.framework
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Flutter/Generated.xcconfig
+ios/Flutter/flutter_export_environment.sh
+ios/Flutter/GeneratedPluginRegistrant.*
+ios/Flutter/podhelper.rb
+ios/.symlinks/
+ios/Flutter/engine/Flutter.framework
+ios/Flutter/engine/Flutter.podspec
+ios/Profile/
+ios/Release/
+sksl_shader_bundle
+
+# Personal settings
+ios/Runner.xcworkspace/contents.xcworkspacedata
+ios/Runner.xcworkspace/xcshareddata/
+ios/Runner.xcworkspace/xcuserdata/
+
+# Android related
+**/android/**/gradle-wrapper.jar
+**/android/.gradle
+**/android/captures/
+**/android/gradlew
+**/android/gradlew.bat
+**/android/local.properties
+**/android/**/GeneratedPluginRegistrant.*
+
+# Fastlane related
+**/fastlane/report.xml
+**/fastlane/Preview.html
+**/fastlane/screenshots
+**/fastlane/test_output
+
+# Others
+**/lib/generated_plugin_registrant.dart
+
+# Add your own global/system specific ignore rules
+# e.g., files or directories used by your IDE of choice
+
+# Windows specific
+**/windows/flutter/
+**/windows/.vs/
+**/windows/*.vcxproj
+**/windows/*.vcxproj.filters
+**/windows/*.vcxproj.user
+**/windows/*.sln
+**/windows/*.suo
+**/windows/*.opendb
+**/windows/*.opensdf
+**/windows/*.userprefs
+**/windows/Runner/Generated Files/
+
+**/windows/runner/Generated Files/
