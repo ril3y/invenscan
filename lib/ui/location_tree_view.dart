@@ -3,15 +3,9 @@
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-<<<<<<< HEAD
 import 'package:flutter_fancy_tree_view/flutter_fancy_tree_view.dart';
 import 'package:invenscan/utils/api/location.dart';
 import 'package:invenscan/utils/api/server_api.dart';
-=======
-import 'package:basic_websocket/utils/api/location.dart';
-import 'package:basic_websocket/utils/api/server_api.dart';
-import 'package:flutter_fancy_tree_view/flutter_fancy_tree_view.dart';
->>>>>>> 7ec393b37ce2c1e0d82742684585db5e255a7133
 
 class LocationNode {
   final Location location;

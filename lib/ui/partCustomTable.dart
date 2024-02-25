@@ -2,10 +2,6 @@
 
 import 'package:flutter/material.dart';
 import '../part_data.dart';
-<<<<<<< HEAD
-=======
-import 'add_parts/edit_screen.dart';
->>>>>>> 7ec393b37ce2c1e0d82742684585db5e255a7133
 
 class CustomTableScreen extends StatefulWidget {
   const CustomTableScreen({super.key});
@@ -51,15 +47,9 @@ class _CustomTableScreenState extends State<CustomTableScreen> {
             itemBuilder: (BuildContext context, int index) {
               return GestureDetector(
                 onTap: () {
-<<<<<<< HEAD
                   // Navigator.of(context).push(MaterialPageRoute(
                   //   builder: (context) => EditPartScreen(part: parts[index]),
                   // ));
-=======
-                  Navigator.of(context).push(MaterialPageRoute(
-                    builder: (context) => EditPartScreen(part: parts[index]),
-                  ));
->>>>>>> 7ec393b37ce2c1e0d82742684585db5e255a7133
                 },
                 child: Container(
                   color: index % 2 == 0 ? Colors.grey[200] : Colors.white,

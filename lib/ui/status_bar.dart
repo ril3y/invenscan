@@ -1,15 +1,7 @@
 // ignore_for_file: prefer_const_constructors
-<<<<<<< HEAD
 import 'package:flutter/material.dart';
 import '../utils/websocket.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-=======
-
-import 'package:flutter/material.dart';
-import '../utils/websocket.dart'; // Replace with the actual path to your WebSocketManager
-import 'package:shared_preferences/shared_preferences.dart';
-bool isConnectedGlobal = false;
->>>>>>> 7ec393b37ce2c1e0d82742684585db5e255a7133
 
 class StatusBar extends StatefulWidget {
   final WebSocketManager webSocketManager;
@@ -27,7 +19,6 @@ class _StatusBarState extends State<StatusBar> {
   @override
   void initState() {
     super.initState();
-<<<<<<< HEAD
     widget.webSocketManager.addHandler(
         "status_bar", _onConnectionChanged, "onConnectionChangedHandlers");
     widget.webSocketManager.addHandler(
@@ -41,15 +32,6 @@ class _StatusBarState extends State<StatusBar> {
     // widget.webSocketManager
     //     .removeHandler("status_bar", "onConnectionFailureHandlers");
     super.dispose();
-=======
-    widget.webSocketManager.addOnConnectionChangedHandler(_onConnectionChanged);
-        widget.webSocketManager.addOnConnectionFailureHandler(_onConnectionFailure);
-
-    _connectionStatus = isConnectedGlobal ? 'Connected' : 'Disconnected';
-    if (isConnectedGlobal) {
-      _loadServerDetails();
-    }
->>>>>>> 7ec393b37ce2c1e0d82742684585db5e255a7133
   }
 
   Future<void> _loadServerDetails() async {
@@ -57,7 +39,6 @@ class _StatusBarState extends State<StatusBar> {
     String? serverAddress = prefs.getString('selected_server_address');
     String? serverPort = prefs.getString('selected_server_port');
 
-<<<<<<< HEAD
     // Check if the widget is still mounted before calling setState
     if (mounted) {
       setState(() {
@@ -87,39 +68,6 @@ class _StatusBarState extends State<StatusBar> {
         _connectionStatus = 'Disconnected';
       }
     });
-=======
-    if (serverAddress != null && serverPort != null) {
-      // Check if the widget is still mounted before calling setState
-      if (mounted) {
-        setState(() {
-          _serverDetails = '$serverAddress:$serverPort';
-        });
-      }
-    }
-  }
-
-  void _onConnectionFailure(error){
-    print("Error:$error");
-  }
-
-  void _onConnectionChanged(bool isConnected) {
-    isConnectedGlobal = isConnected;
-
-    if (isConnected) {
-      if (mounted) {
-        _loadServerDetails();
-        _connectionStatus = 'Connected';
-      }
-    } else {
-      if (mounted) {
-        setState(() {
-          _serverDetails = '';
-          _connectionStatus = 'Disconnected';
-        });
-      }
-    }
-    _connectionStatus = isConnected ? 'Connected' : 'Disconnected';
->>>>>>> 7ec393b37ce2c1e0d82742684585db5e255a7133
   }
 
   @override
@@ -135,14 +83,8 @@ class _StatusBarState extends State<StatusBar> {
             RichText(
               text: TextSpan(
                 style: TextStyle(
-<<<<<<< HEAD
                   fontSize: 16,
                   color: Color.fromARGB(255, 163, 147, 3),
-=======
-                  fontSize: 16, // Adjust the font size as needed
-                  color: Color.fromARGB(
-                      255, 163, 147, 3), // Same color as the status text
->>>>>>> 7ec393b37ce2c1e0d82742684585db5e255a7133
                 ),
                 children: <TextSpan>[
                   TextSpan(
@@ -157,19 +99,11 @@ class _StatusBarState extends State<StatusBar> {
               ),
             ),
           ],
-<<<<<<< HEAD
           Spacer(),
           Text(
             'Status: $_connectionStatus',
             style: TextStyle(
               color: Color.fromARGB(255, 163, 147, 3),
-=======
-          Spacer(), // This will push the status text to the right
-          Text(
-            'Status: $_connectionStatus',
-            style: TextStyle(
-              color: Color.fromARGB(255, 163, 147, 3), // Status text color
->>>>>>> 7ec393b37ce2c1e0d82742684585db5e255a7133
             ),
           ),
         ],

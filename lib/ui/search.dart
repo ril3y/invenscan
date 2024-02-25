@@ -1,13 +1,8 @@
 // In search.dart
 // ignore_for_file: prefer_const_constructors
 
-<<<<<<< HEAD
 import 'package:flutter/material.dart';
 import 'package:invenscan/utils/api/server_api.dart';
-=======
-import 'package:basic_websocket/utils/api/server_api.dart';
-import 'package:flutter/material.dart';
->>>>>>> 7ec393b37ce2c1e0d82742684585db5e255a7133
 import 'package:url_launcher/url_launcher.dart';
 
 class SearchScreen extends StatefulWidget {

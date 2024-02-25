@@ -2,10 +2,7 @@
 
 import 'dart:async';
 import 'dart:io';
-<<<<<<< HEAD
 import 'package:flutter/foundation.dart';
-=======
->>>>>>> 7ec393b37ce2c1e0d82742684585db5e255a7133
 import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -17,7 +14,6 @@ class WebSocketManager {
   String? _clientId; // Property to store the clientId
 
   // Lists of callback functions.
-<<<<<<< HEAD
   Map<String, Function(String)> onErrorHandlers = {};
   Map<String, Function(bool)> onConnectionChangedHandlers = {};
   Map<String, Function(dynamic)> onReceiveHandlers = {};
@@ -25,15 +21,6 @@ class WebSocketManager {
   Map<String, Function(dynamic)> onUserInputRequiredHandlers = {};
   Map<String, Function(String)> onConnectionFailureHandlers = {};
   Map<String, Function(dynamic)> onPartAddedHandlers = {};
-=======
-  List<Function(String)> onError = [];
-  List<Function(bool)> onConnectionChanged = [];
-  List<Function(dynamic)> onReceive = [];
-  List<Function()> onHeartBeat = [];
-  List<Function(dynamic)> onPartAdded = [];
-  List<Function(dynamic)> onUserInputRequired = [];
-  List<Function(String)> onConnectionFailure = [];
->>>>>>> 7ec393b37ce2c1e0d82742684585db5e255a7133
 
   bool _isDisconnectionIntentional = false;
 
@@ -51,7 +38,6 @@ class WebSocketManager {
     await loadSettingsAndConnect();
   }
 
-<<<<<<< HEAD
   void stopConnection() {
     _isDisconnectionIntentional = true;
     _isConnected = false;
@@ -107,71 +93,17 @@ class WebSocketManager {
           "Removed existing $setName and readded it $identifier.");
       
       
-=======
-  // Methods to add callbacks to their respective lists.
-
-  // Adds a handler for receiving data from the WebSocket.
-  void addOnReceiveHandler(Function(dynamic) handler) {
-    onReceive.add(handler);
-  }
-
-  // Adds a handler for receiving data from the WebSocket.
-  void addOnPartAddedHandler(Function(dynamic) handler) {
-    onPartAdded.add(handler);
-  }
-
-  // Adds a handler for receiving user input required from the WebSocket.
-  void addOnUserInputRequired(Function(dynamic) handler) {
-    onUserInputRequired.add(handler);
-  }
-
-  // Adds a handler for receiving heartbeat data from the WebSocket.
-  void addOnHeartbeatHandler(Function() handler) {
-    onHeartBeat.add(handler);
-  }
-
-  // Adds a handler to be called when the connection status changes.
-  void addOnConnectionChangedHandler(Function(bool) handler) {
-    onConnectionChanged.add(handler);
-  }
-
-
-
-  // Adds a handler to be called on WebSocket error.
-  void addOnError(Function(String) handler) {
-    onError.add(handler);
-  }
-
-  void addOnConnectionFailureHandler(Function(String) handler) {
-    onConnectionFailure.add(handler);
-  }
-
-  void _notifyOnConnectionFailure(String errorMessage) {
-    for (var handler in onConnectionFailure) {
-      handler(errorMessage);
-    }
-  }
-
-  // Notifies all registered handlers about the connection status change.
-  void _notifyConnectionStatusChange(bool isConnected) {
-    _isConnected = isConnected;
-    for (var handler in onConnectionChanged) {
-      handler(isConnected);
->>>>>>> 7ec393b37ce2c1e0d82742684585db5e255a7133
     }
   }
 
   // Notifies all registered handlers about the received data.
   void _notifyOnReceive(dynamic data) {
     if (data == 'heartbeat') {
-<<<<<<< HEAD
       if (kDebugMode) {
         print("Heart beat detected");
       }
       _resetTimer();
 
-=======
->>>>>>> 7ec393b37ce2c1e0d82742684585db5e255a7133
       _notifyOnHeartBeat();
     } else if (data.contains("clientId")) {
       var jsonData = jsonDecode(data);
@@ -195,11 +127,7 @@ class WebSocketManager {
 
           default:
             // Default case to handle other events
-<<<<<<< HEAD
             for (var handler in onReceiveHandlers.values) {
-=======
-            for (var handler in onReceive) {
->>>>>>> 7ec393b37ce2c1e0d82742684585db5e255a7133
               handler(data);
             }
             break;
@@ -208,7 +136,6 @@ class WebSocketManager {
     }
   }
 
-<<<<<<< HEAD
   void _notifyOnConnectionFailure(String errorMessage) {
     for (var handler in onConnectionFailureHandlers.values) {
       handler(errorMessage);
@@ -226,53 +153,30 @@ class WebSocketManager {
   // Notifies all registered handlers about the heartbeat data.
   void _notifyOnHeartBeat() {
     for (var handler in onHeartBeatHandlers.values) {
-=======
-  // Notifies all registered handlers about the heartbeat data.
-  void _notifyOnHeartBeat() {
-    for (var handler in onHeartBeat) {
->>>>>>> 7ec393b37ce2c1e0d82742684585db5e255a7133
       handler();
     }
   }
 
-<<<<<<< HEAD
   void _notifyOnPartAdded(dynamic data) {
     for (var handler in onPartAddedHandlers.values) {
-=======
-  void _notifyOnPartAdded(data) {
-    for (var handler in onPartAdded) {
->>>>>>> 7ec393b37ce2c1e0d82742684585db5e255a7133
       handler(data);
     }
   }
 
   // Notifies all registered handlers about the heartbeat data.
   void _notifyOnUserInputRequired(data) {
-<<<<<<< HEAD
     for (var handler in onUserInputRequiredHandlers.values) {
-=======
-    for (var handler in onUserInputRequired) {
->>>>>>> 7ec393b37ce2c1e0d82742684585db5e255a7133
       handler(data);
     }
   }
 
   // Notifies all registered handlers about the error occurred.
   void _notifyOnError(String errorMessage) {
-<<<<<<< HEAD
     for (var handler in onErrorHandlers.values) {
-=======
-    for (var handler in onError) {
->>>>>>> 7ec393b37ce2c1e0d82742684585db5e255a7133
       handler(errorMessage);
     }
   }
 
-<<<<<<< HEAD
-=======
-
-
->>>>>>> 7ec393b37ce2c1e0d82742684585db5e255a7133
   Future<void> loadSettingsAndConnect() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? serverAddress = prefs.getString('selected_server_address');
@@ -288,7 +192,6 @@ class WebSocketManager {
     }
   }
 
-<<<<<<< HEAD
   void connect(Uri uri) {
     if (!_isConnected) {
       _isDisconnectionIntentional = false;
@@ -314,62 +217,25 @@ class WebSocketManager {
   }
 
  void _startListening() {
-=======
-void connect(Uri uri) {
-  if (!_isConnected) {
-    _isDisconnectionIntentional = false;
-    _uri = uri;
-
-    // Attempt to connect
-    _channel = IOWebSocketChannel.connect(
-      uri,
-      pingInterval: const Duration(seconds: 5),
-    );
-
-    // Handle immediate connection errors
-    _channel.stream.handleError((error) {
-      print('Immediate connection error: $error');
-      _handleConnectionError(error);
-    });
-
-    // Separate method to start listening once connection is established
-    _startListening();
-  } else {
-    print("Already connected...");
-  }
-}
-
-
-  void _startListening() {
->>>>>>> 7ec393b37ce2c1e0d82742684585db5e255a7133
   _channel.stream.listen((data) {
     // Data received, connection is established
     if (!_isConnected) {
       _isConnected = true;
       _notifyConnectionStatusChange(true);
     }
-<<<<<<< HEAD
     print('Received data: $data'); // Log received data
-=======
->>>>>>> 7ec393b37ce2c1e0d82742684585db5e255a7133
     _notifyOnReceive(data);
   }, onDone: () {
     // Connection is closed
     _handleConnectionClosure();
-<<<<<<< HEAD
   }, onError: (error, StackTrace stackTrace) {
     // Error occurred
     print('Error occurred: $error'); // Log error
     print('Stack trace: $stackTrace'); // Log stack trace
-=======
-  }, onError: (error) {
-    // Error occurred
->>>>>>> 7ec393b37ce2c1e0d82742684585db5e255a7133
     _handleConnectionError(error);
   });
 }
 
-<<<<<<< HEAD
   void _handleConnectionError(error) {
     _isConnected = false;
     _notifyConnectionStatusChange(false);
@@ -410,54 +276,14 @@ void connect(Uri uri) {
     if (kDebugMode) {
       print('WebSocket connection timed out');
     }
-=======
-void _handleConnectionError(error) {
-  _isConnected = false;
-  _notifyConnectionStatusChange(false);
-
-  String errorMessage;
-  if (error is SocketException) {
-    // Handle socket exception separately
-    errorMessage = "Cannot connect to the server at ${_uri.host}:${_uri.port}. Please check your network connection and server status.";
-  } else {
-    // General error message
-    errorMessage = "Connection error: $error";
-  }
-
-  _notifyOnConnectionFailure(errorMessage);
-  print(errorMessage);
-}
-
-
-void _handleConnectionClosure() {
-  print('WebSocket connection closed');
-  _isConnected = false;
-  _notifyConnectionStatusChange(false);
-  if (!_isDisconnectionIntentional) {
-    _notifyOnConnectionFailure("Connection closed unexpectedly");
-  }
-}
-
-  void _resetTimer() {
-    _timer?.cancel();
-    _timer = Timer(const Duration(seconds: 45), _handleTimeout);
-  }
-
-  void _handleTimeout() {
-    print('WebSocket connection timed out');
->>>>>>> 7ec393b37ce2c1e0d82742684585db5e255a7133
     _isConnected = false;
     _channel.sink.close();
     _notifyConnectionStatusChange(false);
 
     if (_autoReconnect) {
-<<<<<<< HEAD
       if (kDebugMode) {
         print("Attempting to reconnect to WebSocket server");
       }
-=======
-      print("Attempting to reconnect to WebSocket server");
->>>>>>> 7ec393b37ce2c1e0d82742684585db5e255a7133
       Timer(const Duration(seconds: 5), () => connect(_uri));
     }
 
@@ -465,7 +291,6 @@ void _handleConnectionClosure() {
   }
 
   void _stopTimer() {
-<<<<<<< HEAD
     if (kDebugMode) {
       print("Timer Stopped");
     }
@@ -474,12 +299,6 @@ void _handleConnectionClosure() {
       if (kDebugMode) {
         print("Timer Stopped");
       }
-=======
-    print("Timer Stopped");
-    if (_timer != null) {
-      _timer!.cancel();
-      print("Timer Stopped");
->>>>>>> 7ec393b37ce2c1e0d82742684585db5e255a7133
       _timer = null;
     }
   }
@@ -546,8 +365,4 @@ void _handleConnectionClosure() {
     _isDisconnectionIntentional = true;
     _channel.sink.close();
   }
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> 7ec393b37ce2c1e0d82742684585db5e255a7133
