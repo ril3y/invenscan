@@ -12,7 +12,7 @@ class ServerApi {
     String? serverPort = prefs.getString('selected_server_port');
 
     return 'http://$serverAddress:$serverPort';
-    }
+  }
 
   static Future<Map<String, dynamic>> addPart(
       Map<String, dynamic> partData) async {
@@ -183,20 +183,20 @@ class ServerApi {
     // any response data here if your API provides it.
   }
 
-  static Future<http.Response> deletePart(String partId) async {
-    String baseUrl = await _getServerUrl();
-    var url = Uri.parse('$baseUrl/delete_part/$partId');
-    var response = await http.delete(url);
+  static Future<http.Response> deletePart(String? partId) async {
+    String baseUrl =
+        await _getServerUrl(); // Assume this method gets the base URL
+    var url = Uri.parse('$baseUrl/delete_part/$partId'); // Form the delete URL
+
+    var response = await http.delete(url); // Make the DELETE request
 
     if (response.statusCode != 200) {
-      // You can handle different status codes differently if needed
+      // Handle non-200 responses, you could also handle different status codes here
       throw Exception(
           'Failed to delete part. Status code: ${response.statusCode}');
     }
-    return response;
 
-    // If the deletion is successful, no return is needed. You can also handle
-    // any response data here if your API provides it.
+    return response; // Return the response if needed for further processing
   }
 
   static Future<Map<String, dynamic>> previewDeleteLocation(

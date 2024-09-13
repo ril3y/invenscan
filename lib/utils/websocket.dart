@@ -44,6 +44,11 @@ class WebSocketManager {
     _channel.sink.close();
   }
 
+  // Method to check the current connection status
+  bool checkConnectionStatus() {
+    return _isConnected;
+  }
+
   void removeHandler(String handlerName, String setName) {
     // Map of handler sets for easy lookup
     Map<String, Map<String, Function>> handlerSets = {
@@ -89,10 +94,7 @@ class WebSocketManager {
     } else {
       removeHandler(identifier, setName);
       addHandler(identifier, handler, setName);
-      print(
-          "Removed existing $setName and readded it $identifier.");
-      
-      
+      print("Removed existing $setName and readded it $identifier.");
     }
   }
 
@@ -216,25 +218,25 @@ class WebSocketManager {
     }
   }
 
- void _startListening() {
-  _channel.stream.listen((data) {
-    // Data received, connection is established
-    if (!_isConnected) {
-      _isConnected = true;
-      _notifyConnectionStatusChange(true);
-    }
-    print('Received data: $data'); // Log received data
-    _notifyOnReceive(data);
-  }, onDone: () {
-    // Connection is closed
-    _handleConnectionClosure();
-  }, onError: (error, StackTrace stackTrace) {
-    // Error occurred
-    print('Error occurred: $error'); // Log error
-    print('Stack trace: $stackTrace'); // Log stack trace
-    _handleConnectionError(error);
-  });
-}
+  void _startListening() {
+    _channel.stream.listen((data) {
+      // Data received, connection is established
+      if (!_isConnected) {
+        _isConnected = true;
+        _notifyConnectionStatusChange(true);
+      }
+      print('Received data: $data'); // Log received data
+      _notifyOnReceive(data);
+    }, onDone: () {
+      // Connection is closed
+      _handleConnectionClosure();
+    }, onError: (error, StackTrace stackTrace) {
+      // Error occurred
+      print('Error occurred: $error'); // Log error
+      print('Stack trace: $stackTrace'); // Log stack trace
+      _handleConnectionError(error);
+    });
+  }
 
   void _handleConnectionError(error) {
     _isConnected = false;
@@ -253,8 +255,6 @@ class WebSocketManager {
     _notifyOnConnectionFailure(errorMessage);
     print(errorMessage);
   }
-
-
 
   void _handleConnectionClosure([int? closeCode, String? closeReason]) {
     print(

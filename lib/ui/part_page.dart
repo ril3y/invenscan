@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:invenscan/ui/add_parts/edit_screen.dart';
 import 'package:invenscan/utils/api/partmodel.dart';
 import 'package:invenscan/utils/api/server_api.dart';
+import 'package:invenscan/ui/add_parts/view_part.dart';
 
 class PartPage extends StatefulWidget {
   const PartPage({super.key});
@@ -39,23 +40,41 @@ class _PartPageState extends State<PartPage> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (context) =>
-                          EditPartScreen(part: part,)), // Replace EditPartScreen() with your actual widget
+                      builder: (context) => EditPartScreen(
+                            part: part,
+                          )), // Replace EditPartScreen() with your actual widget
                 );
               },
               child: const Text('Edit'),
             ),
             SimpleDialogOption(
               onPressed: () {
-                // Implement navigation or functionality for viewing the part
-                Navigator.pop(context);
+                // Navigate to ViewPartScreen
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => ViewPartScreen(part: part)),
+                );
               },
               child: const Text('View'),
             ),
             SimpleDialogOption(
-              onPressed: () {
-                // Implement functionality for deleting the part
-                Navigator.pop(context);
+              onPressed: () async {
+                Navigator.pop(context); // Close the dialog first
+                try {
+                  await ServerApi.deletePart(part.partId!);
+                  // Refresh the parts list
+                  setState(() {
+                    partsFuture = ServerApi.getParts(1, currentPartCount);
+                  });
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Part deleted successfully")),
+                  );
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Failed to delete part")),
+                  );
+                }
               },
               child: const Text('Delete'),
             ),

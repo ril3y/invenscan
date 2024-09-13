@@ -92,18 +92,21 @@ class _AddPartsState extends State<AddParts> {
     widget.webSocketManager.addHandler(
         "add_parts", handleOnConnectionChanged, "onConnectionChangedHandlers");
 
-
     widget.webSocketManager.startConnection();
-
+    if (widget.webSocketManager.isConnected) {
+      handleOnConnectionChanged(true);
+    }
   }
 
   void handleOnConnectionChanged(bool isConnected) {
-    setState(() {
-      if (mounted) {
+    _qrButtonEnabled = isConnected;
+    _addButtonEnabled = isConnected;
+    if (mounted) {
+      setState() {
         _qrButtonEnabled = isConnected;
         _addButtonEnabled = isConnected;
       }
-    });
+    }
   }
 
   @override
@@ -211,7 +214,25 @@ class _AddPartsState extends State<AddParts> {
         showNfcWaitingDialog(); // Display waiting dialog
 
         try {
-          await NFCManager.writeToNFC(dataToSend['part_id']);
+          // Initialize an empty map for the NFC data
+          Map<String, dynamic> nfcData = {};
+
+          // Always include part_id
+          nfcData['part_id'] = dataToSend['part_id'];
+
+          // Check and include part_name and part_number if they exist
+          if (dataToSend.containsKey('part_name')) {
+            nfcData['part_name'] = dataToSend['part_name'];
+          }
+          if (dataToSend.containsKey('part_number')) {
+            nfcData['part_number'] = dataToSend['part_number'];
+          }
+
+          // Convert the map to a JSON string
+          String jsonData = jsonEncode(nfcData);
+
+          // Write the JSON string to the NFC tag
+          await NFCManager.writeToNFC(jsonData);
           if (mounted) {
             Navigator.of(context).pop(); // Close waiting dialog
           }
@@ -356,7 +377,7 @@ class _AddPartsState extends State<AddParts> {
           FloatingActionButton(
             heroTag: 'scanButton',
             foregroundColor: _addButtonEnabled ? null : Colors.grey,
-            onPressed: _qrButtonEnabled ? _initiateScan : null,
+            onPressed: true ? _initiateScan : null,
             tooltip: 'Scan',
             child: const Icon(Icons.qr_code),
           ),

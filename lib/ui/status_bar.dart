@@ -23,6 +23,14 @@ class _StatusBarState extends State<StatusBar> {
         "status_bar", _onConnectionChanged, "onConnectionChangedHandlers");
     widget.webSocketManager.addHandler(
         "status_bar", _onConnectionFailure, "onConnectionFailureHandlers");
+
+    // Check if the connection is already established
+    if (widget.webSocketManager.checkConnectionStatus()) {
+      _connectionStatus = 'Connected';
+      _loadServerDetails();
+    } else {
+      _connectionStatus = 'Disconnected';
+    }
   }
 
   @override
@@ -45,10 +53,19 @@ class _StatusBarState extends State<StatusBar> {
         _serverDetails = '$serverAddress:$serverPort';
       });
     }
-    }
+  }
 
   void _onConnectionFailure(error) {
     print("Error:$error");
+    if (mounted) {
+      setState() {
+        _serverDetails = '';
+      }
+    } else {
+      // Not mounted, so we can't update the UI. Instead, we'll just store the latest status.
+      _loadServerDetails();
+      _connectionStatus = 'Disconnected';
+    }
   }
 
   /// Updates the connection status displayed in the status bar.
@@ -58,16 +75,21 @@ class _StatusBarState extends State<StatusBar> {
   /// server details. Updates the _connectionStatus state variable with
   /// the latest status.
   void _onConnectionChanged(bool isConnected) {
-    if (!mounted) return;
-    setState(() {
-      if (isConnected) {
-        _loadServerDetails();
-        _connectionStatus = 'Connected';
-      } else {
-        _serverDetails = '';
-        _connectionStatus = 'Disconnected';
-      }
-    });
+    _connectionStatus = isConnected ? 'Connected' : 'Disconnected';
+
+    if (mounted) {
+      setState(() {
+        if (isConnected) {
+          _loadServerDetails();
+        } else {
+          _serverDetails = '';
+        }
+      });
+    } else {
+      // Not mounted, so we can't update the UI. Instead, we'll just store the latest status.
+      _loadServerDetails();
+      _connectionStatus = isConnected ? 'Connected' : 'Disconnected';
+    }
   }
 
   @override
