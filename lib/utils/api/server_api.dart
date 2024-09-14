@@ -1,3 +1,4 @@
+import 'package:invenscan/part_data.dart';
 import 'package:invenscan/utils/api/category.dart';
 import 'package:invenscan/utils/api/partmodel.dart';
 import 'package:http/http.dart' as http;
@@ -82,6 +83,38 @@ class ServerApi {
     }
   }
 
+  static Future<http.Response> printQrCode(
+      {String? partNumber, String? partName}) async {
+    String baseUrl = await _getServerUrl();
+
+    // Ensure that at least one of partName or partNumber is provided
+    if (partName == null && partNumber == null) {
+      throw Exception(
+          "At least one of partName or partNumber must be provided.");
+    }
+
+    // Build the URL for the API endpoint
+    var url = Uri.parse('$baseUrl/printer/print_qr');
+
+    // Create the request payload
+    var requestBody = jsonEncode({
+      "part_number": partNumber,
+      "part_name": partName,
+    });
+
+    // Send the POST request to print the QR code
+    var response = await http.post(
+      url,
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: requestBody,
+    );
+
+    // Return the response object to handle in the calling method
+    return response;
+  }
+
   static Future<Map<String, dynamic>> performSearch(
       String query, String searchType) async {
     String baseUrl = await _getServerUrl();
@@ -132,6 +165,30 @@ class ServerApi {
       print('An unexpected error occurred: $e');
       throw Exception(
           'Failed to load location path due to unexpected error: $e');
+    }
+  }
+
+  static Future<Location?> getLocationById(String locationId) async {
+    String baseUrl =
+        await _getServerUrl(); // Assuming you have this method to get your server URL
+
+    // Build the URL for the API endpoint
+    var url = Uri.parse('$baseUrl/get_location/$locationId');
+
+    // Send the GET request to fetch the location data
+    var response = await http.get(url);
+
+    // Check if the request was successful
+    if (response.statusCode == 200) {
+      // Parse the JSON response
+      var jsonData = jsonDecode(response.body);
+
+      // Assuming Location has a fromJson method
+      return Location.fromJson(jsonData);
+    } else {
+      // Handle the error response, return null or throw an exception
+      print('Failed to load location: ${response.statusCode}');
+      return null;
     }
   }
 
@@ -253,7 +310,7 @@ class ServerApi {
     }
   }
 
-  static Future<Map<String, dynamic>> updatePart(PartModel partData) async {
+  static Future<String> updatePart(PartModel partData) async {
     var jsonPart = partData.toJson();
     var partId = jsonPart['part_id'];
     String baseUrl = await _getServerUrl();
@@ -267,10 +324,79 @@ class ServerApi {
     );
 
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      return response.body;
     } else {
       throw Exception(
           'Failed to add part. Status code: ${response.statusCode}');
+    }
+  }
+
+  static Future<PartModel?> getPartById(String partId) async {
+    String baseUrl = await _getServerUrl();
+
+    // Corrected URL format with partId as a query parameter
+    var url = Uri.parse('$baseUrl/get_part_by_id/$partId');
+
+    var response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      // Decode the JSON response body
+      var responseBody = jsonDecode(response.body);
+
+      // Assuming PartModel has a `fromJson` constructor to deserialize JSON
+      PartModel part = PartModel.fromJson(responseBody);
+
+      return part;
+    } else {
+      print('Failed to load part: ${response.statusCode}');
+      return null; // Return null if the request fails
+    }
+  }
+
+  static Future<PartModel?> getPartByDetails({
+    String? partId,
+    String? partName,
+    String? partNumber,
+  }) async {
+    String baseUrl = await _getServerUrl();
+
+    // Construct the URL with conditional query parameters
+    var queryParameters = <String, String>{};
+    if (partId != null && partId.isNotEmpty) {
+      queryParameters['part_id'] = partId;
+    }
+    if (partName != null && partName.isNotEmpty) {
+      queryParameters['part_name'] = partName;
+    }
+    if (partNumber != null && partNumber.isNotEmpty) {
+      queryParameters['part_number'] = partNumber;
+    }
+
+    // Ensure that at least one parameter is provided
+    if (queryParameters.isEmpty) {
+      throw Exception(
+          'At least one of partId, partName, or partNumber must be provided.');
+    }
+
+    // Construct the full URL
+    var url = Uri.parse('$baseUrl/get_part_by_details')
+        .replace(queryParameters: queryParameters);
+
+    // Send the GET request
+    var response = await http.get(url);
+
+    // Check for a successful response
+    if (response.statusCode == 200) {
+      // Decode the JSON response body
+      var responseBody = jsonDecode(response.body);
+
+      // Assuming PartModel has a `fromJson` constructor to deserialize JSON
+      PartModel part = PartModel.fromJson(responseBody);
+
+      return part;
+    } else {
+      print('Failed to load part: ${response.statusCode}');
+      return null; // Return null if the request fails
     }
   }
 }

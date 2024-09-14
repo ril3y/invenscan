@@ -20,6 +20,9 @@ class InputDialog extends StatefulWidget {
 
 class _InputDialogState extends State<InputDialog> {
   late List<dynamic> requiredInputs;
+  late List<dynamic> optionalInputs;
+
+
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final Map<String, TextEditingController> _controllers = {};
   final Map<String, dynamic> _formData = {};
@@ -70,36 +73,55 @@ class _InputDialogState extends State<InputDialog> {
     }
   }
 
-  void _parseJsonData() {
-    try {
-      Map<String, dynamic> fullData = jsonDecode(widget.jsonData);
-      if (fullData.containsKey('required_inputs') &&
-          fullData['required_inputs'] is List) {
-        requiredInputs = fullData['required_inputs'];
-      } else {
-        requiredInputs = [];
-        print('Error: required_inputs is not a list.');
-      }
+void _parseJsonData() {
+  try {
+    Map<String, dynamic> fullData = jsonDecode(widget.jsonData);
 
-      if (fullData.containsKey('part_number')) {
-        partNumber = fullData['part_number'];
-      } else {
-        print('Error: part_number is missing.');
-      }
-
-      // Initialize controllers for each input requirement
-      for (var input in requiredInputs) {
-        if (input is Map<String, dynamic> && input.containsKey('field_name')) {
-          _controllers[input['field_name']] = TextEditingController();
-        }
-      }
-    } catch (e) {
-      print('Error parsing JSON data: $e');
+    // Parse required inputs
+    if (fullData.containsKey('required_inputs') && fullData['required_inputs'] is List) {
+      requiredInputs = fullData['required_inputs'];
+    } else {
       requiredInputs = [];
-      partNumber =
-          ''; // Initialize partNumber to an empty string or a default value
+      print('Error: required_inputs is not a list.');
     }
+
+    // Parse optional inputs
+    if (fullData.containsKey('optional_inputs') && fullData['optional_inputs'] is List) {
+      optionalInputs = fullData['optional_inputs'];
+    } else {
+      optionalInputs = [];
+      print('Error: optional_inputs is not a list.');
+    }
+
+    // Parse part number
+    if (fullData.containsKey('part_number')) {
+      partNumber = fullData['part_number'];
+    } else {
+      print('Error: part_number is missing.');
+    }
+
+    // Initialize controllers for required inputs
+    for (var input in requiredInputs) {
+      if (input is Map<String, dynamic> && input.containsKey('field_name')) {
+        _controllers[input['field_name']] = TextEditingController();
+      }
+    }
+
+    // Initialize controllers for optional inputs
+    for (var input in optionalInputs) {
+      if (input is Map<String, dynamic> && input.containsKey('field_name')) {
+        _controllers[input['field_name']] = TextEditingController();
+      }
+    }
+
+  } catch (e) {
+    print('Error parsing JSON data: $e');
+    requiredInputs = [];
+    optionalInputs = []; // Initialize optionalInputs to an empty list if there's an error
+    partNumber = ''; // Initialize partNumber to an empty string or a default value
   }
+}
+
 
   @override
   void dispose() {

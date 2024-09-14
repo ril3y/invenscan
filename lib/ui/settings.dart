@@ -7,6 +7,36 @@ import 'dart:convert';
 import 'package:collection/collection.dart';
 import 'styles.dart';
 
+    Future<bool> validatePreferences() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    // Retrieve the values from SharedPreferences
+    String? serverAddress = prefs.getString('selected_server_address');
+    String? serverPort = prefs.getString('selected_server_port');
+    bool? autoConnect = prefs.getBool('auto_connect');
+
+    // Validate server address (e.g., check if it's not null or empty)
+    if (serverAddress == null || serverAddress.isEmpty) {
+      return false;
+    }
+
+    // Validate server port (e.g., check if it's not null, not empty, and a valid integer port number)
+    if (serverPort == null ||
+        serverPort.isEmpty ||
+        int.tryParse(serverPort) == null) {
+      return false;
+    }
+
+    // Optionally, validate the autoConnect flag (if required)
+    if (autoConnect == null) {
+      return false;
+    }
+
+    // If all values are valid, return true
+    return true;
+  }
+  
+
 class ServerInfo {
   String name;
   String address;
@@ -53,6 +83,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _autoConnect = false;
   bool _autoReconnect = false;
   bool _promptNFC = false;
+
+
 
 // ================================================ initState() =========================================================
   @override

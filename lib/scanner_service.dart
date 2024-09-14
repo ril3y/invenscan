@@ -21,6 +21,7 @@ class ScannerService {
     }
   }
 
+
   Future<void> initializeCamera() async {
     final cameras = await availableCameras();
     final firstCamera = cameras.first;

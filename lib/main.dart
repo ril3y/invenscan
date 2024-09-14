@@ -1,11 +1,16 @@
 // ignore_for_file: prefer_const_constructors
 
+import 'package:invenscan/part_data.dart';
+import 'package:invenscan/scanner_service.dart';
+import 'package:invenscan/ui/add_parts/view_part.dart';
 import 'package:invenscan/ui/part_page.dart';
 import 'package:invenscan/ui/styles.dart';
+import 'package:invenscan/utils/api/partmodel.dart';
 import 'package:invenscan/utils/api/server_api.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:invenscan/utils/nfc_manager.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:math';
 import 'utils/websocket.dart';
 import 'ui/add_parts/add_parts.dart';
@@ -22,29 +27,24 @@ void main() {
   );
 }
 
+final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
+
 class IvenScanner extends StatelessWidget {
   const IvenScanner({super.key});
 
   @override
   Widget build(BuildContext context) {
-    Random random = Random();
-    Color randomSeedColor = Color.fromRGBO(
-      random.nextInt(256),
-      random.nextInt(256),
-      random.nextInt(256),
-      1,
-    );
-
     return MaterialApp(
       title: 'InvenScan',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: randomSeedColor),
         primarySwatch: Colors.blue,
       ),
       home: const MyInvenScan(title: 'InvenScan'),
+      navigatorObservers: [routeObserver], // Pass the RouteObserver here
     );
   }
 }
+
 
 class MyInvenScan extends StatefulWidget {
   final String title;
@@ -55,8 +55,10 @@ class MyInvenScan extends StatefulWidget {
   State<MyInvenScan> createState() => _MyInvenScanState();
 }
 
-class _MyInvenScanState extends State<MyInvenScan> {
+class _MyInvenScanState extends State<MyInvenScan> with RouteAware {
+
   late WebSocketManager webSocketManager;
+
   int totalParts = 0;
   int totalLocations = 0;
   int totalCategories = 0;
@@ -65,14 +67,47 @@ class _MyInvenScanState extends State<MyInvenScan> {
   @override
   void initState() {
     super.initState();
+    _initializeApp();
+  }
+
+  // This method will be called when navigating back to the main screen
+  @override
+void didPopNext() {
+  super.didPopNext();
+  print('Returned to MyInvenScan screen');
+  _fetchStatistics();  // Make sure this is called
+}
+
+
+  @override
+  void dispose() {
+    // Unregister this screen from the RouteObserver
+    routeObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+@override
+void didChangeDependencies() {
+  super.didChangeDependencies();
+  final route = ModalRoute.of(context);
+  if (route is PageRoute) {
+    routeObserver.subscribe(this, route);
+  }
+}
+
+
+  Future<void> _initializeApp() async {
     try {
       webSocketManager = WebSocketManager();
-      webSocketManager.addHandler("main", handleOnReceive, "onReceiveHandlers");
-      // webSocketManager.addHandler("main", _onConnectionChanged, "onConnectionChangedHandlers");
-      webSocketManager.startConnection();
+      bool isConnectable = await webSocketManager.loadSettingsAndConnect();
 
-      if (webSocketManager.checkConnectionStatus()) {
+      if (isConnectable) {
+        webSocketManager.addHandler(
+            "main", handleOnReceive, "onReceiveHandlers");
+        webSocketManager.startConnection();
         _fetchStatistics();
+      } else {
+        onError('Failed to connect to WebSocket.');
       }
     } catch (e) {
       if (kDebugMode) {
@@ -82,13 +117,7 @@ class _MyInvenScanState extends State<MyInvenScan> {
     }
   }
 
-  @override
-  void dispose() {
-    super.dispose();
-    // webSocketManager.removeHandler("main", "onReceiveHandlers");
-    // webSocketManager.removeHandler("main", "onConnectionChangedHandlers");
-  }
-
+  
   void onError(String message) {
     // Call this method when an error occurs
     if (mounted) {
@@ -249,53 +278,115 @@ class _MyInvenScanState extends State<MyInvenScan> {
     );
   }
 
-  Widget _buildNfcReadCard() {
-  return GestureDetector(
-    onTap: () async {
-      // Show the NFC waiting dialog
-      showNfcWaitingDialog();
+  Widget _buildQrScanCard() {
+    return GestureDetector(
+      onTap: () async {
+        try {
+          // Initiate barcode/QR code scan
+          var bytes = await ScannerService().scanBarcode();
+          var qrData = utf8.decode(bytes);
 
-      try {
-        // Await the Future to get the actual data
-        Uint8List? nfcData = await NFCManager.readFromNFC();
+          // Attempt to parse the QR code data as JSON
+          var qrJson = jsonDecode(qrData);
 
-        // Dismiss the waiting dialog
-        if (Navigator.of(context).canPop()) {
-          Navigator.of(context).pop();
-        }
+          // Extract partName and partNumber from the QR data
+          String? _partName = qrJson['name'];
+          String? _partNumber = qrJson['number'];
 
-        if (nfcData != null) {
-          _handleNfcData(nfcData);
-        } else {
-          // Handle the case where NFC data is null (e.g., no data read from the tag)
+          // Ensure that both name and number are present
+          if (_partName != null && _partNumber != null) {
+            // Fetch the part using the partName and partNumber
+            PartModel? part = await ServerApi.getPartByDetails(
+                partId: null, partName: _partName, partNumber: _partNumber);
+
+            if (part != null) {
+              // Navigate to the part view page
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ViewPartScreen(part: part),
+                ),
+              );
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Part not found')),
+              );
+            }
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                  content:
+                      Text('Invalid QR code format: Missing name or number')),
+            );
+          }
+        } catch (e) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('No data read from NFC tag.')),
+            SnackBar(content: Text('Failed to scan QR code: ${e.toString()}')),
           );
         }
-      } catch (e) {
-        // Dismiss the waiting dialog in case of an error
-        if (Navigator.of(context).canPop()) {
-          Navigator.of(context).pop();
-        }
-
-        // Handle any errors that occur during NFC reading
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to read NFC tag: ${e.toString()}')),
-        );
-      }
-    },
-    child: Card(
-      elevation: 4,
-      margin: const EdgeInsets.symmetric(vertical: 8.0),
-      child: ListTile(
-        leading: Icon(Icons.nfc, color: Colors.blue),
-        title: Text('Scan NFC Tag', style: TextStyle(fontWeight: FontWeight.bold)),
-        trailing: Icon(Icons.arrow_forward, color: Colors.blue),
+      },
+      child: Card(
+        elevation: 4,
+        margin: const EdgeInsets.symmetric(vertical: 8.0),
+        child: ListTile(
+          leading: Icon(Icons.qr_code, color: Colors.blue),
+          title: Text(
+            'Scan QR Code',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          trailing: Icon(Icons.arrow_forward, color: Colors.blue),
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
+  Widget _buildNfcReadCard() {
+    return GestureDetector(
+      onTap: () async {
+        // Show the NFC waiting dialog
+        showNfcWaitingDialog();
+
+        try {
+          // Await the Future to get the actual data
+          Uint8List? nfcData = await NFCManager.readFromNFC();
+
+          // Dismiss the waiting dialog
+          if (Navigator.of(context).canPop()) {
+            Navigator.of(context).pop();
+          }
+
+          if (nfcData != null) {
+            _handleNfcData(nfcData);
+          } else {
+            // Handle the case where NFC data is null (e.g., no data read from the tag)
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('No data read from NFC tag.')),
+            );
+          }
+        } catch (e) {
+          // Dismiss the waiting dialog in case of an error
+          if (Navigator.of(context).canPop()) {
+            Navigator.of(context).pop();
+          }
+
+          // Handle any errors that occur during NFC reading
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to read NFC tag: ${e.toString()}')),
+          );
+        }
+      },
+      child: Card(
+        elevation: 4,
+        margin: const EdgeInsets.symmetric(vertical: 8.0),
+        child: ListTile(
+          leading: Icon(Icons.nfc, color: Colors.blue),
+          title: Text('Scan NFC Tag',
+              style: TextStyle(fontWeight: FontWeight.bold)),
+          trailing: Icon(Icons.arrow_forward, color: Colors.blue),
+        ),
+      ),
+    );
+  }
 
   Widget _buildStatCard(String title, int count, IconData icon, Color color) {
     return GestureDetector(
@@ -401,6 +492,7 @@ class _MyInvenScanState extends State<MyInvenScan> {
                 _buildStatCard("Categories", totalCategories, Icons.category,
                     Colors.orange),
                 _buildNfcReadCard(), // Add the NFC read card here
+                _buildQrScanCard(), // Add the QR scan card here
               ],
             ),
           ),

@@ -9,9 +9,11 @@ import 'package:invenscan/part_data.dart';
 import 'package:invenscan/scanner_service.dart';
 import 'package:invenscan/ui/add_parts/add_part_form.dart';
 import 'package:invenscan/ui/add_parts/edit_screen.dart';
+import 'package:invenscan/ui/add_parts/view_part.dart';
 import 'package:invenscan/ui/question_dialog.dart';
 import 'package:invenscan/ui/status_bar.dart';
 import 'package:invenscan/utils/api/partmodel.dart';
+import 'package:invenscan/utils/api/server_api.dart';
 import 'package:invenscan/utils/nfc_manager.dart';
 import 'package:invenscan/utils/websocket.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -86,7 +88,8 @@ class _AddPartsState extends State<AddParts> {
     super.initState();
 
     widget.webSocketManager.addHandler(
-        "add_parts", handleOnRequiredInput, "onUserInputRequiredHandlers");
+        "add_parts", handleInput, "onUserInputRequiredHandlers");
+
     widget.webSocketManager
         .addHandler("add_parts", handleOnPartAdded, "onPartAddedHandlers");
     widget.webSocketManager.addHandler(
@@ -157,6 +160,11 @@ class _AddPartsState extends State<AddParts> {
             content: Text(nfcWriteSuccess
                 ? 'NFC Tag Written Successfully!'
                 : 'NFC Tag Writing Skipped.')));
+
+                ServerApi.getCounts();
+                // Open the newly created part in the view_part screen
+                PartModel newPart = PartModel.fromJson(partData);
+                _navigateToViewPart(newPart);
       }
     } else {
       // Handle case where jsonData does not contain the expected event
@@ -284,30 +292,64 @@ class _AddPartsState extends State<AddParts> {
     );
   }
 
-  void handleOnRequiredInput(dynamic data) async {
-    var decodedData = jsonDecode(data);
-    print("handle required input: $decodedData");
-    if (decodedData.containsKey('required_inputs')) {
-      // Handle required inputs
-      if (!mounted) return;
-      showInputQuestionDialog(decodedData);
-    } else if (decodedData.containsKey('event') &&
-        decodedData['event'] == "question") {
-      // Early return if the widget is not in the tree
-      if (!mounted) return;
+  void handleInput(dynamic data) async {
+  var decodedData = jsonDecode(data);
+  print("handle input: $decodedData");
 
-      bool? userResponse = await showQuestionDialog(data);
-      // Re-check if the widget is still mounted after awaiting
-      if (!mounted) return;
+  // Handle required inputs if present
+  if (decodedData.containsKey('required_inputs')) {
+    if (!mounted) return;
+    showInputQuestionDialog(decodedData); // Required inputs must be handled
+  }
 
-      // Check if a response was received
-      if (userResponse != null) {
-        // Check the value of userResponse and send the corresponding message
-        String response = userResponse ? "yes" : "no";
-        widget.webSocketManager.send(response);
-      }
+  // Handle optional inputs if present
+  else if (decodedData.containsKey('optional_inputs')) {
+    if (!mounted) return;
+    bool? userResponse = await showInputDialogForOptional(decodedData);
+    
+    // Optional inputs can be ignored based on the user's decision
+    if (userResponse != null && userResponse) {
+      showInputQuestionDialog(decodedData); // Handle optional inputs only if user agrees
     }
   }
+
+  // Handle event-based questions if present
+  else if (decodedData.containsKey('event') && decodedData['event'] == "question") {
+    if (!mounted) return;
+
+    bool? userResponse = await showQuestionDialog(data);
+    if (!mounted) return;
+
+    if (userResponse != null) {
+      // Send "yes" or "no" based on user response
+      String response = userResponse ? "yes" : "no";
+      widget.webSocketManager.send(response);
+    }
+  }
+}
+
+Future<bool?> showInputDialogForOptional(dynamic data) async {
+  return await showDialog<bool>(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: const Text('Optional Input'),
+        content: const Text('Do you want to provide optional input?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Skip'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Provide Input'),
+          ),
+        ],
+      );
+    },
+  );
+}
+
 
   // void _editPart(int index) {
   //   Navigator.push(
@@ -361,12 +403,29 @@ class _AddPartsState extends State<AddParts> {
       MaterialPageRoute(builder: (_) => const AddPartForm()),
     );
 
+
+
+
     if (response != null) {
       // Handle the response here
       handleOnPartAdded(response);
       print("Response from AddPartForm: $response");
     }
   }
+
+  void _navigateToViewPart(PartModel part) async {
+    final response = await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => ViewPartScreen(part: part)),
+    );
+
+    if (response != null) { 
+      // Handle the response here
+      handleOnPartAdded(response);
+      print("Response from ViewPartScreen: $response");
+    }
+  }
+
+
 
   Widget _buildFloatingActionButtons() {
     return Padding(

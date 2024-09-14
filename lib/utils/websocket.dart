@@ -2,6 +2,10 @@
 
 import 'dart:async';
 import 'dart:io';
+import 'dart:math';
+import 'dart:developer' as developer;
+
+import '../ui/settings.dart';
 import 'package:flutter/foundation.dart';
 import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
@@ -19,6 +23,7 @@ class WebSocketManager {
   Map<String, Function(dynamic)> onReceiveHandlers = {};
   Map<String, Function()> onHeartBeatHandlers = {};
   Map<String, Function(dynamic)> onUserInputRequiredHandlers = {};
+  Map<String, Function(dynamic)> onUserInputOptionalHandlers = {};
   Map<String, Function(String)> onConnectionFailureHandlers = {};
   Map<String, Function(dynamic)> onPartAddedHandlers = {};
 
@@ -34,8 +39,8 @@ class WebSocketManager {
   bool get isConnected => _isConnected;
 
   // Initialize connection settings and attempt to connect if autoConnect is enabled.
-  void startConnection() async {
-    await loadSettingsAndConnect();
+  Future<bool> startConnection() async {
+    return await loadSettingsAndConnect();
   }
 
   void stopConnection() {
@@ -118,6 +123,9 @@ class WebSocketManager {
       if (jsonData.containsKey('required_inputs')) {
         // This is a user input required event
         _notifyOnUserInputRequired(data);
+      } else if (jsonData.containsKey('required_inputs')) {
+        // This is a user input required event
+        _notifyOnUserInputRequired(data);
       } else if (jsonData.containsKey('event')) {
         switch (jsonData['event']) {
           case "question":
@@ -172,6 +180,12 @@ class WebSocketManager {
     }
   }
 
+  void _notifyOnUserInputOptionald(data) {
+    for (var handler in onUserInputOptionalHandlers.values) {
+      handler(data);
+    }
+  }
+
   // Notifies all registered handlers about the error occurred.
   void _notifyOnError(String errorMessage) {
     for (var handler in onErrorHandlers.values) {
@@ -179,18 +193,21 @@ class WebSocketManager {
     }
   }
 
-  Future<void> loadSettingsAndConnect() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? serverAddress = prefs.getString('selected_server_address');
-    String? serverPort = prefs.getString('selected_server_port');
-    _autoConnect = prefs.getBool('auto_connect') ?? false;
-    _autoReconnect = prefs.getBool('auto_reconnect') ?? false;
+  Future<bool> loadSettingsAndConnect() async {
+    try {
+      // Validate preferences
+      bool isValid = await validatePreferences();
 
-    //attemp to connect, autoconnect or reconnect if enabled
-    if (serverAddress != null && serverPort != null && _autoConnect ||
-        _autoReconnect) {
-      _uri = Uri.parse('ws://$serverAddress:$serverPort/ws');
-      connect(_uri);
+      if (!isValid) {
+        // If the preferences are invalid, return false
+        return false;
+      }
+
+      return true;
+    } catch (e) {
+      developer.log("Error loading settings and connecting: $e",
+          name: "WebSocketManager", error: e);
+      return false;
     }
   }
 
@@ -277,17 +294,22 @@ class WebSocketManager {
       print('WebSocket connection timed out');
     }
     _isConnected = false;
-    _channel.sink.close();
+
+    // Close the channel if it's not already closed
+    if (_channel != null) {
+      _channel.sink.close();
+    }
+
     _notifyConnectionStatusChange(false);
 
     if (_autoReconnect) {
       if (kDebugMode) {
         print("Attempting to reconnect to WebSocket server");
       }
-      Timer(const Duration(seconds: 5), () => connect(_uri));
+      Timer(const Duration(seconds: 5), () => _attemptReconnect());
     }
 
-    _stopTimer(); // Add this to ensure the timer is stopped.
+    _stopTimer(); // Ensure the timer is stopped.
   }
 
   void _stopTimer() {
@@ -348,7 +370,12 @@ class WebSocketManager {
     bool currentAutoReconnect = prefs.getBool('auto_reconnect') ?? false;
 
     if (currentAutoReconnect && _uri != null) {
-      Timer(const Duration(seconds: 5), () => connect(_uri));
+      if (_channel == null || !_isConnected) {
+        print("Reconnecting to WebSocket...");
+        connect(_uri); // Ensure `_channel` is reinitialized
+      } else {
+        print("WebSocket is already connected or reconnecting...");
+      }
     }
   }
 

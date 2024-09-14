@@ -2,15 +2,15 @@
 import "package:invenscan/utils/api/location.dart";
 
 class PartModel {
-  final String? partId;
-  final String? partNumber;
-  final String? partName;
-  final int? quantity;
-  final String? description;
-  final String? supplier;
-  final Location? location;
-  final String? image_path; // Change the type to String
-  final Map<String, dynamic> additionalProperties; // Add this field
+   String? partId;
+   String? partNumber;
+   String? partName;
+   int? quantity;
+   String? description;
+   String? supplier;
+   Location? location;
+   String? image_path; // Change the type to String
+   Map<String, dynamic> additionalProperties; // Add this field
 
   PartModel({
     this.partId,
