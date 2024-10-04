@@ -4,7 +4,6 @@ import 'package:invenscan/utils/api/partmodel.dart';
 import 'package:invenscan/utils/api/server_api.dart';
 import 'package:invenscan/ui/location_tree_view.dart';
 import 'package:invenscan/utils/api/location.dart';
-import 'package:invenscan/ui/location_selector_screen.dart';
 
 class EditPartScreen extends StatefulWidget {
   final PartModel part;
@@ -26,13 +25,8 @@ class _EditPartScreenState extends State<EditPartScreen> {
 
   Map<String, TextEditingController> additionalControllers = {};
 
-  // Indicates if the categories are being loaded
   bool _isLoadingCategories = true;
-
-  // Holds all available categories fetched from the server
   List<Category> _allAvailableCategories = [];
-
-  // Holds the categories selected for the part
   final List<String> _selectedCategories = [];
 
   @override
@@ -40,6 +34,7 @@ class _EditPartScreenState extends State<EditPartScreen> {
     super.initState();
     _fetchCategories();
 
+    // Initialize controllers for core properties
     _partNumberController = TextEditingController(text: widget.part.partNumber);
     _partNameController = TextEditingController(text: widget.part.partName);
     _quantityController =
@@ -50,25 +45,30 @@ class _EditPartScreenState extends State<EditPartScreen> {
     selectedLocation = widget.part.location;
 
     // Initialize _selectedCategories with existing categories
-    if (widget.part.additionalProperties.containsKey('categories')) {
-      var categories = widget.part.additionalProperties['categories'];
-      if (categories is List) {
-        _selectedCategories.addAll(categories.cast<String>());
-      } else if (categories is String) {
-        // Handle comma-separated string of categories
-        _selectedCategories.addAll(categories.split(','));
-      }
+    if (widget.part.categories != null) {
+      _selectedCategories
+          .addAll(widget.part.categories!.map((category) => category.name));
     }
 
-    // Initialize text editing controllers for additionalProperties
-    widget.part.additionalProperties.forEach((key, dynamic value) {
-      if (key != 'categories') {
-        // Exclude 'categories' from additional properties
-        String valueStr = value.toString();
-        additionalControllers[key] = TextEditingController(text: valueStr);
-        print("$key: $valueStr");
-      }
+    // Initialize text controllers only for the "additional_properties"
+    Map<String, dynamic> additionalProperties =
+        widget.part.additional_properties;
+
+    additionalProperties.forEach((key, dynamic value) {
+      additionalControllers[key] =
+          TextEditingController(text: value.toString());
     });
+
+    // // Initialize text controllers for the "additional_properties"
+    // Map<String, dynamic> additionalProperties =
+    //     widget.part.additionalProperties ??
+    //         {}; // No need for 'additional_properties' inside the field
+
+    // Create a TextEditingController for each key in additionalProperties
+    // additionalProperties.forEach((key, dynamic value) {
+    //   additionalControllers[key] =
+    //       TextEditingController(text: value.toString());
+    // });
   }
 
   void _fetchCategories() async {
@@ -82,7 +82,6 @@ class _EditPartScreenState extends State<EditPartScreen> {
       setState(() {
         _isLoadingCategories = false;
       });
-      // Handle the error state appropriately
     }
   }
 
@@ -98,22 +97,21 @@ class _EditPartScreenState extends State<EditPartScreen> {
   }
 
   void _updatePartModel() {
-    // Read values from text fields
+    // Gather the updated values from text fields
     String updatedPartNumber = _partNumberController.text;
     String updatedPartName = _partNameController.text;
     int? updatedQuantity = int.tryParse(_quantityController.text);
     String updatedDescription = _descriptionController.text;
     String updatedSupplier = _supplierController.text;
 
-    // Create a Map to store additional properties
-    Map<String, dynamic> updatedAdditionalProperties = {};
+    // Create a Map for the updated "additional_properties"
+    Map<String, dynamic> updatedAdditionalProperties =
+        widget.part.additional_properties = {};
 
-    // Include 'categories' in additionalProperties
-    updatedAdditionalProperties['categories'] = _selectedCategories;
-
-    // Add other additional properties
+    // Update each additional property with the edited value
     additionalControllers.forEach((key, controller) {
-      updatedAdditionalProperties[key] = controller.text;
+      updatedAdditionalProperties[key] =
+          controller.text; // Update the values based on user input
     });
 
     // Create the updated PartModel
@@ -126,7 +124,7 @@ class _EditPartScreenState extends State<EditPartScreen> {
       supplier: updatedSupplier,
       location: selectedLocation, // Use the selected location
       image_path: widget.part.image_path,
-      additionalProperties: updatedAdditionalProperties,
+      additional_properties: updatedAdditionalProperties, // Set directly
     );
 
     // Call the ServerApi method to update the part
@@ -140,147 +138,155 @@ class _EditPartScreenState extends State<EditPartScreen> {
       widget.part.description = updatedDescription;
       widget.part.supplier = updatedSupplier;
       widget.part.location = selectedLocation;
-      widget.part.additionalProperties = updatedAdditionalProperties;
+      widget.part.additional_properties =
+          updatedAdditionalProperties; // Update the map
     });
 
     // Navigate back to the previous screen
-              Navigator.pop(context, true);
+    Navigator.pop(context, true);
   }
 
-  void _openLocationSelector() async {
-    final Location? result = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => LocationSelectorScreen(),
-      ),
-    );
+  List<Widget> buildAdditionalPropertyFields(
+      Map<String, TextEditingController> additionalControllers) {
+    return additionalControllers.entries.map((entry) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8.0),
+        child: TextFormField(
+          controller: entry.value,
+          decoration: InputDecoration(
+            labelText:
+                _formatKey(entry.key), // Format key to a human-readable label
+          ),
+        ),
+      );
+    }).toList();
+  }
 
-    if (result != null) {
-      setState(() {
-        selectedLocation = result;
-      });
-    }
+// Function to format the keys
+  String _formatKey(String key) {
+    // Converts keys like 'part_number' to 'Part Number'
+    return key.replaceAll('_', ' ').split(' ').map((word) {
+      return word[0].toUpperCase() + word.substring(1);
+    }).join(' ');
   }
 
   @override
-Widget build(BuildContext context) {
-  return Scaffold(
-    appBar: AppBar(
-      title: const Text('Edit Part'),
-    ),
-    body: SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Existing form fields
-            TextFormField(
-              controller: _partNumberController,
-              decoration: const InputDecoration(labelText: 'Part Number'),
-            ),
-            TextFormField(
-              controller: _partNameController,
-              decoration: const InputDecoration(labelText: 'Part Name'),
-            ),
-            TextFormField(
-              controller: _quantityController,
-              decoration: const InputDecoration(labelText: 'Quantity'),
-              keyboardType: TextInputType.number,
-            ),
-            TextFormField(
-              controller: _descriptionController,
-              decoration: const InputDecoration(labelText: 'Description'),
-            ),
-            TextFormField(
-              controller: _supplierController,
-              decoration: const InputDecoration(labelText: 'Supplier'),
-            ),
-            // Additional properties
-            ...additionalControllers.entries.map((entry) {
-              return TextFormField(
-                controller: entry.value,
-                decoration: InputDecoration(labelText: entry.key),
-              );
-            }),
-            const SizedBox(height: 20),
-            // Categories
-            const Text(
-              "Categories",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            Wrap(
-              spacing: 8.0,
-              children: _selectedCategories
-                  .map((category) => Chip(
-                        label: Text(category),
-                        onDeleted: () {
-                          setState(() {
-                            _selectedCategories.remove(category);
-                          });
-                        },
-                      ))
-                  .toList(),
-            ),
-            _isLoadingCategories
-                ? const CircularProgressIndicator()
-                : DropdownButton<String>(
-                    hint: const Text("Add Category"),
-                    onChanged: (String? newValue) {
-                      if (newValue != null &&
-                          !_selectedCategories.contains(newValue)) {
-                        setState(() {
-                          _selectedCategories.add(newValue);
-                        });
-                      }
-                    },
-                    items: _allAvailableCategories
-                        .map<DropdownMenuItem<String>>((Category category) {
-                      return DropdownMenuItem<String>(
-                        value: category.name,
-                        child: Text(category.name),
-                      );
-                    }).toList(),
-                  ),
-            const SizedBox(height: 20),
-            // Location Section
-            const Text(
-              "Location",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            // Display the selected location
-            Text(
-              selectedLocation != null
-                  ? 'Selected Location: ${selectedLocation!.name}'
-                  : 'No location selected',
-              style: const TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: 10),
-            // Insert the LocationTreeView directly
-            SizedBox(
-              height: 300, // Adjust the height as needed
-              child: LocationTreeView(
-                onLocationSelected: (Location location) {
-                  setState(() {
-                    selectedLocation = location;
-                  });
-                },
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Edit Part'),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Form fields for core properties
+              TextFormField(
+                controller: _partNumberController,
+                decoration: const InputDecoration(labelText: 'Part Number'),
               ),
-            ),
-            const SizedBox(height: 20),
-            // Save Changes Button
-            ElevatedButton(
-              onPressed: _updatePartModel,
-              child: const Text('Save Changes'),
-            ),
-          ],
+              TextFormField(
+                controller: _partNameController,
+                decoration: const InputDecoration(labelText: 'Part Name'),
+              ),
+              TextFormField(
+                controller: _quantityController,
+                decoration: const InputDecoration(labelText: 'Quantity'),
+                keyboardType: TextInputType.number,
+              ),
+              TextFormField(
+                controller: _descriptionController,
+                decoration: const InputDecoration(labelText: 'Description'),
+              ),
+              TextFormField(
+                controller: _supplierController,
+                decoration: const InputDecoration(labelText: 'Supplier'),
+              ),
+              const SizedBox(height: 20),
+
+              // Additional properties fields
+              const Text(
+                "Additional Properties",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              ...buildAdditionalPropertyFields(additionalControllers),
+
+              // Categories
+              const Text(
+                'Categories',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              Wrap(
+                spacing: 8.0,
+                children: _selectedCategories
+                    .map((category) => Chip(
+                          label: Text(category),
+                          onDeleted: () {
+                            setState(() {
+                              _selectedCategories.remove(category);
+                            });
+                          },
+                        ))
+                    .toList(),
+              ),
+              _isLoadingCategories
+                  ? const CircularProgressIndicator()
+                  : DropdownButton<String>(
+                      hint: const Text("Add Category"),
+                      onChanged: (String? newValue) {
+                        if (newValue != null &&
+                            !_selectedCategories.contains(newValue)) {
+                          setState(() {
+                            _selectedCategories.add(newValue);
+                          });
+                        }
+                      },
+                      items: _allAvailableCategories
+                          .map<DropdownMenuItem<String>>((Category category) {
+                        return DropdownMenuItem<String>(
+                          value: category.name,
+                          child: Text(category.name),
+                        );
+                      }).toList(),
+                    ),
+              const SizedBox(height: 20),
+
+              // Location section (now only at the bottom)
+              const Text(
+                'Location',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              Text(
+                selectedLocation != null
+                    ? 'Selected Location: ${selectedLocation!.name}'
+                    : 'No location selected',
+                style: const TextStyle(fontSize: 16),
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                height: 300, // Adjust the height as needed
+                child: LocationTreeView(
+                  onLocationSelected: (Location location) {
+                    setState(() {
+                      selectedLocation = location;
+                    });
+                  },
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Save Changes Button
+              ElevatedButton(
+                onPressed: _updatePartModel,
+                child: const Text('Save Changes'),
+              ),
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
-
-
-
+    );
+  }
 }

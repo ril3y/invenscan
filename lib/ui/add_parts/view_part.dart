@@ -20,8 +20,8 @@ class ViewPartScreen extends StatefulWidget {
 class _ViewPartScreenState extends State<ViewPartScreen> {
   late PartModel part; // Store the part locally in the state
   Location? location;
+  bool _isPrinting = false; // To track the printing state
 
-  @override
   @override
   void initState() {
     super.initState();
@@ -30,8 +30,7 @@ class _ViewPartScreenState extends State<ViewPartScreen> {
 
     // If location is null and part.location.id is not null, fetch the location
     if (location == null && part.location?.id != null) {
-      _loadLocation(part.location!
-          .id); // Use the non-null assertion since it's already checked
+      _loadLocation(part.location!.id);
     }
   }
 
@@ -39,53 +38,22 @@ class _ViewPartScreenState extends State<ViewPartScreen> {
     try {
       Location? fetchedLocation = await ServerApi.getLocationById(locationId);
       if (fetchedLocation != null) {
+        if (!mounted) return; // Ensure the widget is still in the tree
         setState(() {
           location = fetchedLocation;
         });
       }
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error loading location: ${e.toString()}')),
       );
     }
   }
 
-  Future<void> _printQrCode(BuildContext context) async {
-    try {
-      // Fetch part name and part number from the part object
-      String? partNumber = part.partNumber;
-      String? partName = part.partName;
-
-      // Ensure that at least one of partName or partNumber is available
-      if ((partNumber == null || partNumber.isEmpty) &&
-          (partName == null || partName.isEmpty)) {
-        throw Exception(
-            "Part number or name must be available to generate QR.");
-      }
-
-      // Call the API service and pass part name and part number
-      var response = await ServerApi.printQrCode(
-          partName: partName, partNumber: partNumber);
-
-      // Check if the response is successful
-      if (response.statusCode == 200) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('QR code printed successfully')),
-        );
-      } else {
-        throw Exception('Failed to print QR code: ${response.body}');
-      }
-    } catch (e) {
-      // Handle any errors and show them in a snackbar
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: ${e.toString()}')),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    final String? imageUrl = part.additionalProperties['image_url'];
+    final String? imageUrl = part.additional_properties['image_url'];
 
     return Scaffold(
       appBar: AppBar(
@@ -117,16 +85,15 @@ class _ViewPartScreenState extends State<ViewPartScreen> {
 
             // Main Details
             _buildMainDetails(),
-            Divider(),
+            const Divider(),
 
             // Categories
-            if (part.additionalProperties['categories'] != null &&
-                (part.additionalProperties['categories'] as List).isNotEmpty)
+            if (part.categories != null && (part.categories as List).isNotEmpty)
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildCategories(),
-                  Divider(),
+                  const Divider(),
                 ],
               ),
 
@@ -136,21 +103,30 @@ class _ViewPartScreenState extends State<ViewPartScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildLocationDetails(),
-                  Divider(),
+                  const Divider(),
                 ],
               ),
 
             // Additional Properties
-            if (part.additionalProperties.isNotEmpty)
+            if (part.additional_properties.isNotEmpty)
               _buildAdditionalProperties(),
 
-            // Add the QR code print button at the bottom
             const SizedBox(height: 20),
+
+            // Print QR Code Button (disabled while printing)
             ElevatedButton.icon(
-              onPressed: () => _printQrCode(context),
-              icon: const Icon(Icons.qr_code),
-              label: const Text('Print QR Code'),
+              onPressed: _isPrinting ? null : () => _printQrCode(context),
+              icon: _isPrinting
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.qr_code),
+              label: Text(_isPrinting ? 'Printing...' : 'Print QR Code'),
             ),
+
+            // Edit Part Button
             ElevatedButton.icon(
               onPressed: () => _navigateToEditPartScreen(context),
               icon: const Icon(Icons.edit),
@@ -165,14 +141,11 @@ class _ViewPartScreenState extends State<ViewPartScreen> {
   Future<void> _reloadPart() async {
     if (part.partId != null) {
       // Fetch the updated part data from the server if partId is not null
-      PartModel? updatedPart = await ServerApi.getPartById(
-          part.partId!); // Use the non-null assertion operator
+      PartModel? updatedPart = await ServerApi.getPartById(part.partId!);
 
       if (part.location?.id != null) {
-        _loadLocation(part.location!
-            .id); // Use the non-null assertion since it's already checked
+        _loadLocation(part.location!.id); // Reload location if available
       }
-     
 
       // Only update the state if the updatedPart is not null
       if (updatedPart != null) {
@@ -250,6 +223,7 @@ class _ViewPartScreenState extends State<ViewPartScreen> {
         _buildKeyValueRow('Part Number', part.partNumber ?? 'N/A'),
         _buildKeyValueRow('Quantity', part.quantity?.toString() ?? 'N/A'),
         _buildKeyValueRow('Supplier', part.supplier ?? 'N/A'),
+        _buildKeyValueRow("Part Type", part.partType ?? 'N/A'),
         if (part.description != null && part.description!.isNotEmpty) ...[
           const SizedBox(height: 8),
           const Text(
@@ -278,7 +252,7 @@ class _ViewPartScreenState extends State<ViewPartScreen> {
         const SizedBox(height: 8),
         Wrap(
           spacing: 8.0,
-          children: (part.additionalProperties['categories'] as List)
+          children: (part.additional_properties['categories'] as List)
               .map<Widget>((category) => Chip(
                     label: Text(category),
                   ))
@@ -293,46 +267,21 @@ class _ViewPartScreenState extends State<ViewPartScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // const Text(
-        //   'Location',
-        //   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        // ),
         const SizedBox(height: 8),
-        // _buildKeyValueRow('Location ID', location!.id.toString()),
         _buildKeyValueRow('Location Name', location!.name ?? 'N/A'),
         if (location!.description != null && location!.description!.isNotEmpty)
           _buildKeyValueRow('Description', location!.description!),
-        // if (location!.parentId != null)
-        //   _buildKeyValueRow('Parent ID', location!.parentId.toString()),
       ],
     );
   }
 
   // Build Additional Properties Section
   Widget _buildAdditionalProperties() {
-    // Exclude keys that are already displayed
-    final excludedKeys = {
-      'image_url',
-      'categories',
-      'part_number',
-      'part_name',
-      'quantity',
-      'description',
-      'supplier',
-      'part_id',
-      'location',
-      'image_path',
-    };
+    // Get only the "additional_properties" key from part.additionalProperties
+    Map<String, dynamic> additionalProps = part.additional_properties ?? {};
 
-    final propertiesToDisplay = part.additionalProperties.entries
-        .where((entry) =>
-            !excludedKeys.contains(entry.key) &&
-            entry.value != null &&
-            entry.value.toString().isNotEmpty)
-        .toList();
-
-    if (propertiesToDisplay.isEmpty) {
-      return SizedBox();
+    if (additionalProps.isEmpty) {
+      return SizedBox.shrink(); // Don't display anything if there are no additional properties
     }
 
     return Column(
@@ -343,10 +292,54 @@ class _ViewPartScreenState extends State<ViewPartScreen> {
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
-        ...propertiesToDisplay.map((entry) {
+        ...additionalProps.entries.map((entry) {
           return _buildKeyValueRow(entry.key, entry.value.toString());
         }).toList(),
       ],
     );
+  }
+
+  Future<void> _printQrCode(BuildContext context) async {
+    setState(() {
+      _isPrinting = true; // Disable the button while printing
+    });
+
+    try {
+      // Fetch part name and part number from the part object
+      String? partNumber = part.partNumber;
+      String? partName = part.partName;
+
+      // Ensure that at least one of partName or partNumber is available
+      if ((partNumber == null || partNumber.isEmpty) &&
+          (partName == null || partName.isEmpty)) {
+        throw Exception(
+            "Part number or name must be available to generate QR.");
+      }
+
+      // Call the API service and pass part name and part number
+      var response = await ServerApi.printQrCode(
+          partName: partName, partNumber: partNumber);
+
+      // Check if the response is successful
+      if (response.statusCode == 200) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('QR code printed successfully')),
+        );
+      } else {
+        throw Exception('Failed to print QR code: ${response.body}');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${e.toString()}')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isPrinting = false; // Re-enable the button after printing
+        });
+      }
+    }
   }
 }

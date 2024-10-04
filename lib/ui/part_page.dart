@@ -39,60 +39,6 @@ class _PartPageState extends State<PartPage> {
     });
   }
 
-  void _showPartActions(BuildContext context, PartModel part) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return SimpleDialog(
-          title: Text(part.partName ?? 'Part Actions'),
-          children: <Widget>[
-            SimpleDialogOption(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => EditPartScreen(part: part),
-                  ),
-                );
-              },
-              child: const Text('Edit'),
-            ),
-            SimpleDialogOption(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ViewPartScreen(part: part),
-                  ),
-                );
-              },
-              child: const Text('View'),
-            ),
-            // SimpleDialogOption(
-            //   onPressed: () async {
-            //     Navigator.pop(context); // Close the dialog first
-            //     try {
-            //       await ServerApi.deletePart(part.partId!);
-            //       setState(() {
-            //         partsFuture = ServerApi.getParts(1, currentPartCount);
-            //       });
-            //       ScaffoldMessenger.of(context).showSnackBar(
-            //         const SnackBar(content: Text("Part deleted successfully")),
-            //       );
-            //     } catch (e) {
-            //       ScaffoldMessenger.of(context).showSnackBar(
-            //         const SnackBar(content: Text("Failed to delete part")),
-            //       );
-            //     }
-            //   },
-            //   child: const Text('Delete'),
-            // ),
-          ],
-        );
-      },
-    );
-  }
-
   Widget _buildPartsTable(List<PartModel> parts) {
     return ListView.builder(
       itemCount: parts.length,
@@ -183,7 +129,12 @@ class _PartPageState extends State<PartPage> {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-              onTap: () => _showPartActions(context, part),
+              onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ViewPartScreen(part: part),
+                  ),
+                ),
             ),
           ),
         );

@@ -208,6 +208,8 @@ class ServerApi {
     }
   }
 
+//TODO: Update this to just get names or numbers and ids so when clicking you can get the 
+//actual part without taking up too much memory or bandwidth
   static Future<List<PartModel>> getParts(int page, int pageSize) async {
     String baseUrl =
         await _getServerUrl(); // Assuming _getServerUrl() is implemented elsewhere
